@@ -446,6 +446,12 @@
        class="sidebar-link {% if request.endpoint == 'profit' %}active{% endif %}">
       <i class="bi bi-graph-up-arrow"></i> Profit Summary
     </a>
+    <a href="{{ url_for('market_price') }}"
+       class="sidebar-link {% if request.endpoint == 'market_price' %}active{% endif %}">
+      <i class="bi bi-shop"></i> Market Prices
+      <span style="margin-left:auto;background:#e8a020;color:#fff;font-size:.6rem;
+                   font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;">LIVE</span>
+    </a>
     <a href="{{ url_for('reports') }}"
        class="sidebar-link {% if request.endpoint == 'reports' %}active{% endif %}">
       <i class="bi bi-file-earmark-bar-graph"></i> Reports

@@ -583,6 +583,82 @@ def create_app():
                          download_name='harvest_report.csv',
                          as_attachment=True)
 
+
+    # ── Market Price Routes ───────────────────────────────────
+
+    @app.route('/market-price')
+    @login_required
+    def market_price():
+        """Live Market Price page — fetches Agmarknet mandi prices."""
+        crops = Crop.query.filter_by(status='Growing').order_by(Crop.name).all()
+        return render_template('market_price.html', growing_crops=crops)
+
+    @app.route('/api/market-price')
+    @login_required
+    def api_market_price():
+        """
+        Server-side proxy to Agmarknet (data.gov.in) API.
+        Keeps the API key hidden from the browser.
+        """
+        import urllib.request
+        import urllib.parse
+        import json as json_mod
+
+        commodity = request.args.get('commodity', '').strip()
+        state     = request.args.get('state', '').strip()
+        api_key   = request.args.get('api_key', '').strip()
+
+        if not commodity:
+            return jsonify({'error': 'Please enter a crop name.'}), 400
+
+        if not api_key:
+            return jsonify({'error': 'API key is required. Get it free from data.gov.in'}), 400
+
+        try:
+            params = {
+                'api-key'  : api_key,
+                'format'   : 'json',
+                'limit'    : '20',
+                'filters[commodity]': commodity,
+            }
+            if state:
+                params['filters[state]'] = state
+
+            url = ('https://api.data.gov.in/resource/'
+                   '9ef84268-d588-465a-a308-a864a43d0070?'
+                   + urllib.parse.urlencode(params))
+
+            req = urllib.request.Request(url, headers={'User-Agent': 'KrishiTrack/1.0'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json_mod.loads(resp.read().decode())
+
+            records = data.get('records', [])
+            if not records:
+                return jsonify({'records': [], 'message': 'No price data found for this crop/state.'})
+
+            result = []
+            for r in records:
+                result.append({
+                    'state'      : r.get('state', '—'),
+                    'district'   : r.get('district', '—'),
+                    'market'     : r.get('market', '—'),
+                    'commodity'  : r.get('commodity', commodity),
+                    'variety'    : r.get('variety', '—'),
+                    'grade'      : r.get('grade', '—'),
+                    'min_price'  : r.get('min_price', '0'),
+                    'max_price'  : r.get('max_price', '0'),
+                    'modal_price': r.get('modal_price', '0'),
+                    'date'       : r.get('arrival_date', '—'),
+                })
+            return jsonify({'records': result, 'total': len(result)})
+
+        except urllib.error.HTTPError as e:
+            if e.code == 403:
+                return jsonify({'error': 'Invalid API key. Please check your data.gov.in API key.'}), 403
+            return jsonify({'error': f'API Error: {e.code}'}), 500
+        except Exception as e:
+            return jsonify({'error': f'Could not fetch prices: {str(e)}'}), 500
+
     # ── API: auto-calc helpers (JSON) ─────────────────────────
 
     @app.route('/api/expense-total', methods=['POST'])

@@ -1,0 +1,741 @@
+{% extends 'base.html' %}
+{% block title %}Live Market Prices{% endblock %}
+{% block page_title %}🏪 Live Market Prices{% endblock %}
+{% block page_subtitle %}Check real mandi prices and decide the best time to sell your crop{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Market Price Page Styles ── */
+  .api-setup-card {
+    background: linear-gradient(135deg, #1a3209, #2d5016);
+    border-radius: 16px;
+    color: #fff;
+    padding: 24px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .api-setup-card::after {
+    content: '🏪';
+    position: absolute;
+    right: 24px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 5rem;
+    opacity: .15;
+  }
+
+  .search-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    border: 2px solid var(--cream-dark);
+  }
+
+  .price-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 2px solid var(--cream-dark);
+    padding: 18px;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-card:hover {
+    border-color: var(--green-light);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  }
+  .price-card .market-name {
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--green-dark);
+  }
+  .price-card .modal-price-val {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green-mid);
+    line-height: 1;
+  }
+  .price-card .price-range {
+    font-size: .8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .price-card .location-badge {
+    font-size: .75rem;
+    background: var(--green-pale);
+    color: var(--green-dark);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .price-card .date-badge {
+    font-size: .72rem;
+    color: var(--text-muted);
+  }
+
+  /* Recommendation Box */
+  .rec-box {
+    border-radius: 12px;
+    padding: 16px 20px;
+    border-left: 5px solid;
+    margin-top: 4px;
+  }
+  .rec-sell    { background: #d4edda; border-color: #28a745; color: #1a5c2e; }
+  .rec-wait    { background: var(--amber-pale); border-color: var(--amber); color: var(--amber-dark); }
+  .rec-neutral { background: #dbeafe; border-color: #3b82f6; color: #1e3a5f; }
+
+  /* Price trend bar */
+  .trend-bar {
+    height: 6px;
+    border-radius: 10px;
+    background: var(--cream-dark);
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .trend-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--green-mid), var(--green-light));
+    transition: width .8s ease;
+  }
+
+  /* States selector */
+  .state-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .state-chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--cream-dark);
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-mid);
+    transition: all .15s;
+    background: #fff;
+  }
+  .state-chip:hover, .state-chip.active {
+    background: var(--green-pale);
+    border-color: var(--green-light);
+    color: var(--green-dark);
+  }
+
+  /* Loading spinner */
+  .price-spinner {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+  .spin {
+    display: inline-block;
+    width: 40px; height: 40px;
+    border: 4px solid var(--cream-dark);
+    border-top-color: var(--green-mid);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* My Crops comparison section */
+  .crop-compare-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--cream);
+    border: 1.5px solid var(--cream-dark);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .compare-arrow {
+    font-size: 1.4rem;
+  }
+
+  /* API key input */
+  .api-key-input {
+    font-family: 'Courier New', monospace;
+    font-size: .85rem;
+    letter-spacing: .5px;
+  }
+
+  /* Steps */
+  .step-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: .85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* No results */
+  .no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    display: none;
+  }
+  .no-results .icon { font-size: 3.5rem; }
+
+  /* Summary stats bar */
+  .price-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .price-summary-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--cream-dark);
+    text-align: center;
+  }
+  .price-summary-item .val {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+  .price-summary-item .lbl {
+    font-size: .75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-top: 2px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── How to Get API Key Banner ─────────────────────────── -->
+<div class="api-setup-card mb-4" id="apiSetupBanner">
+  <div style="max-width:70%">
+    <div style="font-size:.72rem;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:6px;">
+      Required One-Time Setup
+    </div>
+    <h4 style="font-family:'Lora',serif;color:#d4edba;margin-bottom:8px;">
+      Get Your Free API Key from data.gov.in
+    </h4>
+    <p style="opacity:.8;font-size:.9rem;margin-bottom:16px;">
+      KrishiTrack uses India's official Agmarknet mandi price database.
+      It's <strong>100% free</strong> — just register once to get your API key.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:500px;">
+      <div style="display:flex;align-items:flex-start;gap:10px;font-size:.85rem;">
+        <span class="step-circle">1</span>
+        <span>Go to <a href="https://api.data.gov.in" target="_blank"
+          style="color:#7ab648;font-weight:700;">api.data.gov.in</a> → Click <strong>"Register"</strong></span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;font-size:.85rem;">
+        <span class="step-circle">2</span>
+        <span>Sign up with your email → Verify email → Login</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;font-size:.85rem;">
+        <span class="step-circle">3</span>
+        <span>Go to <strong>My Account → API Keys</strong> → Copy your key</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;font-size:.85rem;">
+        <span class="step-circle">4</span>
+        <span>Paste it in the search box below — done! ✅</span>
+      </div>
+    </div>
+  </div>
+  <button onclick="document.getElementById('apiSetupBanner').style.display='none'"
+    style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);
+           border:none;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:.8rem;">
+    Hide
+  </button>
+</div>
+
+<!-- ── Search Box ─────────────────────────────────────────── -->
+<div class="search-box mb-4">
+  <div class="row g-3 align-items-end">
+
+    <!-- Crop Name -->
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label">
+        🌾 Crop / Commodity Name
+      </label>
+      <input type="text" id="cropInput" class="form-control"
+             placeholder="e.g. Wheat, Tomato, Rice"
+             list="cropSuggestions">
+      <datalist id="cropSuggestions">
+        <option value="Wheat"><option value="Rice"><option value="Maize">
+        <option value="Tomato"><option value="Potato"><option value="Onion">
+        <option value="Soyabean"><option value="Cotton"><option value="Sugarcane">
+        <option value="Mustard"><option value="Groundnut"><option value="Bajra">
+        <option value="Jowar"><option value="Turmeric"><option value="Chilli">
+        <option value="Garlic"><option value="Cauliflower"><option value="Brinjal">
+        <option value="Cabbage"><option value="Peas"><option value="Arhar/Tur">
+        <option value="Moong"><option value="Urad"><option value="Gram">
+      </datalist>
+    </div>
+
+    <!-- State Filter -->
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label">📍 State (optional)</label>
+      <select id="stateInput" class="form-select">
+        <option value="">All States</option>
+        <option>Andhra Pradesh</option><option>Assam</option>
+        <option>Bihar</option><option>Chhattisgarh</option>
+        <option>Gujarat</option><option>Haryana</option>
+        <option>Himachal Pradesh</option><option>Jharkhand</option>
+        <option>Karnataka</option><option>Kerala</option>
+        <option>Madhya Pradesh</option><option>Maharashtra</option>
+        <option>Odisha</option><option>Punjab</option>
+        <option>Rajasthan</option><option>Tamil Nadu</option>
+        <option>Telangana</option><option>Uttar Pradesh</option>
+        <option>Uttarakhand</option><option>West Bengal</option>
+      </select>
+    </div>
+
+    <!-- API Key -->
+    <div class="col-sm-8 col-lg-4">
+      <label class="form-label">
+        🔑 Your data.gov.in API Key
+        <a href="https://api.data.gov.in" target="_blank"
+           style="font-size:.72rem;color:var(--green-mid);margin-left:6px;">Get free key ↗</a>
+      </label>
+      <input type="text" id="apiKeyInput" class="form-control api-key-input"
+             placeholder="Paste your API key here"
+             autocomplete="off">
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">
+        <i class="bi bi-shield-lock"></i> Key is sent securely — never stored
+      </div>
+    </div>
+
+    <!-- Search Button -->
+    <div class="col-sm-4 col-lg-2">
+      <button onclick="fetchPrices()" class="btn btn-farm w-100" style="padding:11px;">
+        <i class="bi bi-search me-1"></i> Search
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Crop Buttons from My Farm -->
+  {% if growing_crops %}
+  <div class="mt-3 pt-3" style="border-top:1.5px solid var(--cream-dark);">
+    <div style="font-size:.8rem;font-weight:700;color:var(--text-muted);margin-bottom:6px;">
+      <i class="bi bi-lightning-charge"></i> Quick Search — My Growing Crops:
+    </div>
+    <div class="state-chips">
+      {% for crop in growing_crops %}
+      <span class="state-chip" onclick="quickSearch('{{ crop.name }}')">
+        🌿 {{ crop.name }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Loading Spinner ────────────────────────────────────── -->
+<div class="price-spinner" id="spinner">
+  <div class="spin"></div>
+  <div style="margin-top:14px;color:var(--text-muted);font-weight:600;">
+    Fetching live mandi prices…
+  </div>
+</div>
+
+<!-- ── No Results ─────────────────────────────────────────── -->
+<div class="no-results" id="noResults">
+  <div class="icon">🔍</div>
+  <h5 class="mt-3">No prices found</h5>
+  <p id="noResultsMsg">Try a different crop name or remove the state filter.</p>
+</div>
+
+<!-- ── Error Message ──────────────────────────────────────── -->
+<div id="errorBox" class="alert alert-danger" style="display:none;border-radius:12px;">
+  <i class="bi bi-exclamation-triangle me-2"></i>
+  <span id="errorMsg"></span>
+</div>
+
+<!-- ── Results Section ───────────────────────────────────── -->
+<div id="resultsSection" style="display:none;">
+
+  <!-- Summary Stats -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h5 style="font-family:'Lora',serif;color:var(--green-dark);margin:0;">
+      <span id="resultCropName"></span> — Mandi Prices
+      <span style="font-size:.75rem;background:var(--green-pale);color:var(--green-dark);
+                   padding:3px 10px;border-radius:20px;vertical-align:middle;margin-left:8px;font-family:'Nunito',sans-serif;">
+        LIVE
+      </span>
+    </h5>
+    <div style="font-size:.8rem;color:var(--text-muted);">
+      <i class="bi bi-clock"></i> Fetched: <span id="fetchTime"></span>
+      &nbsp;|&nbsp; <span id="totalRecords"></span> markets found
+    </div>
+  </div>
+
+  <!-- Min / Avg / Max Summary Cards -->
+  <div class="price-summary" id="priceSummary"></div>
+
+  <!-- Harvest Recommendation -->
+  <div id="recommendation" style="margin-bottom:20px;"></div>
+
+  <!-- My Crop Comparison -->
+  <div id="myCropCompare" style="display:none;margin-bottom:20px;">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-arrow-left-right text-warning"></i>
+        Comparison with Your Crops
+      </div>
+      <div class="card-body" id="compareBody"></div>
+    </div>
+  </div>
+
+  <!-- Price Cards Grid -->
+  <div class="row g-3" id="priceCards"></div>
+</div>
+
+<!-- ── Demo Mode (No API Key) ─────────────────────────────── -->
+<div id="demoSection">
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-bar-chart-fill text-success"></i>
+      Sample Mandi Prices — Demo Data
+      <span style="font-size:.72rem;background:var(--amber-pale);color:var(--amber-dark);
+                   padding:2px 8px;border-radius:20px;margin-left:8px;">Demo</span>
+    </div>
+    <div class="card-body">
+      <p class="text-muted mb-3" style="font-size:.88rem;">
+        Below are example prices to show how the feature works.
+        Enter your API key above to see <strong>real live mandi prices</strong>.
+      </p>
+      <div class="row g-3" id="demoPriceCards">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- How prices help section -->
+  <div class="row g-3 mt-2">
+    <div class="col-md-4">
+      <div class="card h-100 text-center p-3">
+        <div style="font-size:2.5rem;">📈</div>
+        <h6 style="color:var(--green-dark);margin-top:8px;">Know Best Time to Sell</h6>
+        <p class="text-muted small">Compare today's mandi price with your cost of production. Sell when profit margin is highest.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 text-center p-3">
+        <div style="font-size:2.5rem;">🏪</div>
+        <h6 style="color:var(--green-dark);margin-top:8px;">Find Best Market</h6>
+        <p class="text-muted small">Different mandis offer different prices for same crop. Pick the market giving highest modal price.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 text-center p-3">
+        <div style="font-size:2.5rem;">⚖️</div>
+        <h6 style="color:var(--green-dark);margin-top:8px;">Avoid Distress Sales</h6>
+        <p class="text-muted small">If today's price is below your investment cost, wait or store crop until prices improve.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// ── My Growing Crops Data (from Flask) ──────────────────────
+const myCrops = [
+  {% for crop in growing_crops %}
+  {
+    name: "{{ crop.name }}",
+    variety: "{{ crop.variety or '' }}",
+    field_area: {{ crop.field_area }},
+    investment: {{ crop.total_investment }},
+    expected_harvest: "{{ crop.expected_harvest.strftime('%d %b %Y') if crop.expected_harvest else '' }}",
+  },
+  {% endfor %}
+];
+
+// ── Demo Data ────────────────────────────────────────────────
+const demoData = [
+  { commodity:'Wheat',  market:'Bhopal Mandi',    state:'Madhya Pradesh', min:2100, max:2400, modal:2280, date:'Today' },
+  { commodity:'Wheat',  market:'Indore Mandi',    state:'Madhya Pradesh', min:2050, max:2350, modal:2250, date:'Today' },
+  { commodity:'Tomato', market:'Nashik APMC',     state:'Maharashtra',    min:800,  max:1600, modal:1200, date:'Today' },
+  { commodity:'Tomato', market:'Pune Market',     state:'Maharashtra',    min:900,  max:1800, modal:1400, date:'Today' },
+  { commodity:'Rice',   market:'Amritsar Mandi',  state:'Punjab',         min:2100, max:2500, modal:2300, date:'Today' },
+  { commodity:'Onion',  market:'Lasalgaon APMC',  state:'Maharashtra',    min:1200, max:2200, modal:1800, date:'Today' },
+];
+
+// ── Render Demo Cards ────────────────────────────────────────
+function renderDemo() {
+  const container = document.getElementById('demoPriceCards');
+  const grouped = {};
+  demoData.forEach(d => {
+    if (!grouped[d.commodity]) grouped[d.commodity] = [];
+    grouped[d.commodity].push(d);
+  });
+
+  let html = '';
+  Object.entries(grouped).forEach(([crop, records]) => {
+    records.forEach(r => {
+      html += buildPriceCard(r.market, r.state, '', r.commodity, r.modal, r.min, r.max, r.date, true);
+    });
+  });
+  container.innerHTML = html;
+}
+
+// ── Build a Price Card ───────────────────────────────────────
+function buildPriceCard(market, state, district, commodity, modal, min, max, date, isDemo=false) {
+  const maxPossible = 5000;
+  const pct = Math.min((modal / maxPossible) * 100, 100);
+  const demoTag = isDemo ? '<span style="font-size:.65rem;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:10px;margin-left:6px;">Demo</span>' : '';
+  return `
+    <div class="col-sm-6 col-lg-4">
+      <div class="price-card">
+        <div class="location-badge">📍 ${state}${district ? ' · ' + district : ''}</div>
+        <div class="market-name">${market} ${demoTag}</div>
+        <div style="margin-top:10px;">
+          <div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;">Modal Price</div>
+          <div class="modal-price-val">₹${Number(modal).toLocaleString('en-IN')}<span style="font-size:.9rem;opacity:.6">/q</span></div>
+          <div class="price-range">Min: ₹${Number(min).toLocaleString('en-IN')} &nbsp;|&nbsp; Max: ₹${Number(max).toLocaleString('en-IN')}</div>
+        </div>
+        <div class="trend-bar"><div class="trend-fill" style="width:${pct}%"></div></div>
+        <div class="date-badge mt-2"><i class="bi bi-calendar3"></i> ${date}</div>
+      </div>
+    </div>`;
+}
+
+// ── Fetch Live Prices ────────────────────────────────────────
+async function fetchPrices() {
+  const commodity = document.getElementById('cropInput').value.trim();
+  const state     = document.getElementById('stateInput').value.trim();
+  const apiKey    = document.getElementById('apiKeyInput').value.trim();
+
+  if (!commodity) {
+    alert('Please enter a crop name to search.');
+    document.getElementById('cropInput').focus();
+    return;
+  }
+  if (!apiKey) {
+    alert('Please enter your data.gov.in API key.\nGet it free from: https://api.data.gov.in');
+    document.getElementById('apiKeyInput').focus();
+    return;
+  }
+
+  // Hide demo, show spinner
+  document.getElementById('demoSection').style.display   = 'none';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('noResults').style.display      = 'none';
+  document.getElementById('errorBox').style.display       = 'none';
+  document.getElementById('spinner').style.display        = 'block';
+
+  try {
+    const params = new URLSearchParams({ commodity, api_key: apiKey });
+    if (state) params.append('state', state);
+
+    const resp = await fetch(`/api/market-price?${params}`);
+    const data = await resp.json();
+
+    document.getElementById('spinner').style.display = 'none';
+
+    if (!resp.ok || data.error) {
+      document.getElementById('errorMsg').textContent = data.error || 'Unknown error occurred.';
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('demoSection').style.display = 'block';
+      return;
+    }
+
+    if (!data.records || data.records.length === 0) {
+      document.getElementById('noResultsMsg').textContent =
+        data.message || 'No prices found. Try a different crop name or remove the state filter.';
+      document.getElementById('noResults').style.display = 'block';
+      return;
+    }
+
+    renderResults(data.records, commodity);
+
+  } catch (err) {
+    document.getElementById('spinner').style.display  = 'none';
+    document.getElementById('errorMsg').textContent   = 'Network error: ' + err.message;
+    document.getElementById('errorBox').style.display = 'block';
+    document.getElementById('demoSection').style.display = 'block';
+  }
+}
+
+// ── Render Live Results ──────────────────────────────────────
+function renderResults(records, searchedCrop) {
+  // Header
+  document.getElementById('resultCropName').textContent = searchedCrop;
+  document.getElementById('fetchTime').textContent = new Date().toLocaleTimeString('en-IN');
+  document.getElementById('totalRecords').textContent = records.length;
+
+  // Calculate stats
+  const modals = records.map(r => parseFloat(r.modal_price) || 0).filter(v => v > 0);
+  const minAll  = Math.min(...records.map(r => parseFloat(r.min_price)||0));
+  const maxAll  = Math.max(...records.map(r => parseFloat(r.max_price)||0));
+  const avgModal = modals.length ? Math.round(modals.reduce((a,b)=>a+b,0) / modals.length) : 0;
+
+  // Summary cards
+  document.getElementById('priceSummary').innerHTML = `
+    <div class="price-summary-item">
+      <div class="val" style="color:var(--soil);">₹${minAll.toLocaleString('en-IN')}</div>
+      <div class="lbl">Lowest Price /q</div>
+    </div>
+    <div class="price-summary-item">
+      <div class="val" style="color:var(--green-mid);">₹${avgModal.toLocaleString('en-IN')}</div>
+      <div class="lbl">Average Modal /q</div>
+    </div>
+    <div class="price-summary-item">
+      <div class="val" style="color:#27ae60;">₹${maxAll.toLocaleString('en-IN')}</div>
+      <div class="lbl">Highest Price /q</div>
+    </div>
+  `;
+
+  // Harvest Recommendation
+  const recBox = document.getElementById('recommendation');
+  const avgPerKg = avgModal / 100; // quintal → kg
+  let recHtml = '';
+
+  if (avgModal > 0) {
+    // Find matching crop in my farm
+    const matchedCrop = myCrops.find(c =>
+      c.name.toLowerCase().includes(searchedCrop.toLowerCase()) ||
+      searchedCrop.toLowerCase().includes(c.name.toLowerCase())
+    );
+
+    if (matchedCrop && matchedCrop.investment > 0) {
+      // Estimate cost per kg (rough: investment / assumed 1000kg per acre)
+      const estProductionKg = matchedCrop.field_area * 1000;
+      const costPerKg       = matchedCrop.investment / estProductionKg;
+      const profitPerKg     = avgPerKg - costPerKg;
+      const profitPct       = ((profitPerKg / costPerKg) * 100).toFixed(1);
+
+      if (profitPerKg > 0) {
+        recHtml = `
+          <div class="rec-box rec-sell">
+            <strong>✅ Good Time to Sell!</strong> — Current avg market price is
+            <strong>₹${avgPerKg.toFixed(2)}/kg</strong>.
+            Your estimated cost per kg is <strong>₹${costPerKg.toFixed(2)}</strong>.
+            Expected profit: <strong>+₹${profitPerKg.toFixed(2)}/kg (~${profitPct}% return)</strong>
+            on your <strong>${matchedCrop.name}</strong> crop.
+          </div>`;
+      } else {
+        recHtml = `
+          <div class="rec-box rec-wait">
+            <strong>⏳ Consider Waiting</strong> — Current avg market price is
+            <strong>₹${avgPerKg.toFixed(2)}/kg</strong>, which is below your estimated cost of
+            <strong>₹${costPerKg.toFixed(2)}/kg</strong> for <strong>${matchedCrop.name}</strong>.
+            If possible, store the crop and wait for prices to rise.
+          </div>`;
+      }
+
+      // Comparison section
+      const compareBox = document.getElementById('myCropCompare');
+      const compareBody = document.getElementById('compareBody');
+      compareBox.style.display = 'block';
+      compareBody.innerHTML = `
+        <div class="crop-compare-row">
+          <div>
+            <div style="font-size:.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">My Crop</div>
+            <div style="font-weight:700;font-size:1rem;color:var(--green-dark);">
+              ${matchedCrop.name} ${matchedCrop.variety ? '('+matchedCrop.variety+')' : ''}
+            </div>
+            <div style="font-size:.82rem;color:var(--text-muted);">${matchedCrop.field_area} acres
+              ${matchedCrop.expected_harvest ? ' · Harvest by ' + matchedCrop.expected_harvest : ''}
+            </div>
+          </div>
+          <div class="text-center">
+            <div style="font-size:.75rem;color:var(--text-muted);">My Cost/kg (est.)</div>
+            <div style="font-family:'Lora',serif;font-size:1.3rem;font-weight:700;color:var(--soil);">
+              ₹${costPerKg.toFixed(2)}
+            </div>
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="text-center">
+            <div style="font-size:.75rem;color:var(--text-muted);">Avg Market/kg</div>
+            <div style="font-family:'Lora',serif;font-size:1.3rem;font-weight:700;color:var(--green-mid);">
+              ₹${avgPerKg.toFixed(2)}
+            </div>
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="text-center">
+            <div style="font-size:.75rem;color:var(--text-muted);">Expected Profit/kg</div>
+            <div style="font-family:'Lora',serif;font-size:1.3rem;font-weight:700;
+                        color:${profitPerKg >= 0 ? '#27ae60' : '#e74c3c'};">
+              ${profitPerKg >= 0 ? '+' : ''}₹${profitPerKg.toFixed(2)}
+            </div>
+          </div>
+        </div>
+        <div style="font-size:.76rem;color:var(--text-muted);padding:4px 8px;">
+          ⚠️ Estimated based on ₹${matchedCrop.investment.toLocaleString('en-IN')} total investment
+          over ${matchedCrop.field_area} acres (~${estProductionKg.toLocaleString()} kg assumed production).
+          Actual profit depends on real harvest quantity.
+        </div>
+      `;
+    } else {
+      recHtml = `
+        <div class="rec-box rec-neutral">
+          <strong>ℹ️ Price Info:</strong> Average modal price across ${records.length} markets is
+          <strong>₹${avgModal.toLocaleString('en-IN')}/quintal (₹${avgPerKg.toFixed(2)}/kg)</strong>.
+          Add this crop to your farm records to get a personalised harvest recommendation.
+        </div>`;
+      document.getElementById('myCropCompare').style.display = 'none';
+    }
+  }
+  recBox.innerHTML = recHtml;
+
+  // Sort by modal price descending (best market first)
+  records.sort((a, b) => parseFloat(b.modal_price||0) - parseFloat(a.modal_price||0));
+
+  // Price cards
+  let cardsHtml = '';
+  records.forEach(r => {
+    cardsHtml += buildPriceCard(
+      r.market, r.state, r.district, r.commodity,
+      r.modal_price, r.min_price, r.max_price, r.date
+    );
+  });
+  document.getElementById('priceCards').innerHTML = cardsHtml;
+
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Quick Search from chip click ─────────────────────────────
+function quickSearch(cropName) {
+  document.getElementById('cropInput').value = cropName;
+  // Highlight active chip
+  document.querySelectorAll('.state-chip').forEach(c => {
+    c.classList.toggle('active', c.textContent.trim().includes(cropName));
+  });
+  // Auto-search if API key is already entered
+  if (document.getElementById('apiKeyInput').value.trim()) {
+    fetchPrices();
+  } else {
+    document.getElementById('apiKeyInput').focus();
+    document.getElementById('apiKeyInput').style.borderColor = 'var(--amber)';
+    setTimeout(() => document.getElementById('apiKeyInput').style.borderColor = '', 2000);
+  }
+}
+
+// ── Enter key to search ───────────────────────────────────────
+document.getElementById('cropInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fetchPrices();
+});
+
+// ── Init ──────────────────────────────────────────────────────
+renderDemo();
+</script>
+{% endblock %}
