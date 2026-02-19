@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}KrishiTrack{% endblock %} — Smart Farm Manager</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    /* ═══════════════════════════════════════════════
+       KrishiTrack – Design System (Earthy Natural)
+    ═══════════════════════════════════════════════ */
+    :root {
+      --green-dark:   #2d5016;
+      --green-mid:    #4a7c2f;
+      --green-light:  #7ab648;
+      --green-pale:   #d4edba;
+      --amber:        #e8a020;
+      --amber-dark:   #c47d0a;
+      --amber-pale:   #fef3d0;
+      --soil:         #6b4226;
+      --soil-light:   #c8956c;
+      --cream:        #faf7f0;
+      --cream-dark:   #f0ebe0;
+      --text-dark:    #1c2a0e;
+      --text-mid:     #3d5220;
+      --text-muted:   #7a8c6a;
+      --red-soft:     #c0392b;
+      --red-pale:     #fdecea;
+      --sidebar-w:    260px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--cream);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    h1,h2,h3,h4,h5 { font-family: 'Lora', serif; font-weight: 700; }
+
+    /* ── Sidebar ─────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: linear-gradient(175deg, var(--green-dark) 0%, #1a3209 100%);
+      display: flex;
+      flex-direction: column;
+      z-index: 1040;
+      overflow-y: auto;
+      transition: transform .3s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,.25);
+    }
+
+    .sidebar-brand {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      text-decoration: none;
+    }
+    .sidebar-brand .brand-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .sidebar-brand .brand-name {
+      font-family: 'Lora', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--green-pale);
+      letter-spacing: .5px;
+      display: block;
+    }
+    .sidebar-brand .brand-sub {
+      font-size: .72rem;
+      color: rgba(255,255,255,.45);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .sidebar-nav { flex: 1; padding: 16px 0; }
+
+    .nav-section-label {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,.3);
+      text-transform: uppercase;
+      padding: 16px 24px 6px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 24px;
+      color: rgba(255,255,255,.72);
+      text-decoration: none;
+      font-size: .92rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all .2s ease;
+    }
+    .sidebar-link:hover {
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      border-left-color: var(--amber);
+    }
+    .sidebar-link.active {
+      background: rgba(122,182,72,.18);
+      color: var(--green-pale);
+      border-left-color: var(--green-light);
+    }
+    .sidebar-link i { font-size: 1.1rem; width: 22px; }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255,255,255,.1);
+      font-size: .8rem;
+      color: rgba(255,255,255,.35);
+    }
+    .sidebar-footer a {
+      color: rgba(255,255,255,.5);
+      text-decoration: none;
+    }
+    .sidebar-footer a:hover { color: #fff; }
+
+    /* ── Main Content ─────────────────────────────── */
+    .main-wrapper {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left .3s ease;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 2px solid var(--cream-dark);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .topbar-title {
+      font-family: 'Lora', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--green-dark);
+      margin: 0;
+    }
+    .topbar-subtitle {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+
+    .btn-hamburger {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--green-dark);
+      cursor: pointer;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green-pale);
+      border-radius: 40px;
+      padding: 6px 14px 6px 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--green-dark);
+    }
+    .user-badge .avatar {
+      width: 30px; height: 30px;
+      background: var(--green-mid);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .9rem;
+    }
+
+    .page-content { padding: 28px; flex: 1; }
+
+    /* ── Cards ────────────────────────────────────── */
+    .card {
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07);
+      background: #fff;
+    }
+    .card-header {
+      background: transparent;
+      border-bottom: 1.5px solid var(--cream-dark);
+      padding: 16px 22px;
+      font-family: 'Lora', serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--green-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Stat Cards ───────────────────────────────── */
+    .stat-card {
+      border-radius: 14px;
+      padding: 22px 22px 18px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      right: -20px; top: -20px;
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+    }
+    .stat-card .stat-icon {
+      font-size: 2.2rem;
+      opacity: .85;
+      margin-bottom: 10px;
+    }
+    .stat-card .stat-value {
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card .stat-label {
+      font-size: .82rem;
+      opacity: .85;
+      margin-top: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .stat-green  { background: linear-gradient(135deg, var(--green-mid), var(--green-dark)); }
+    .stat-amber  { background: linear-gradient(135deg, var(--amber), var(--amber-dark)); }
+    .stat-soil   { background: linear-gradient(135deg, var(--soil-light), var(--soil)); }
+    .stat-profit { background: linear-gradient(135deg, #27ae60, #1a7a40); }
+    .stat-loss   { background: linear-gradient(135deg, #e74c3c, #a93226); }
+
+    /* ── Buttons ──────────────────────────────────── */
+    .btn-farm {
+      background: var(--green-mid);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: all .2s;
+    }
+    .btn-farm:hover { background: var(--green-dark); color: #fff; transform: translateY(-1px); }
+
+    .btn-amber {
+      background: var(--amber);
+      color: var(--text-dark);
+      border: none;
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: all .2s;
+    }
+    .btn-amber:hover { background: var(--amber-dark); color: #fff; }
+
+    .btn-outline-farm {
+      border: 2px solid var(--green-mid);
+      color: var(--green-mid);
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-weight: 600;
+      font-size: .9rem;
+      background: transparent;
+      transition: all .2s;
+    }
+    .btn-outline-farm:hover { background: var(--green-mid); color: #fff; }
+
+    /* ── Badges ───────────────────────────────────── */
+    .badge-growing  { background: var(--green-pale);  color: var(--green-dark); }
+    .badge-harvested{ background: var(--amber-pale);  color: var(--amber-dark); }
+    .badge-status   { padding: 5px 12px; border-radius: 30px; font-weight: 600; font-size: .78rem; }
+
+    /* ── Table ────────────────────────────────────── */
+    .farm-table th {
+      background: var(--cream-dark);
+      font-weight: 700;
+      font-size: .82rem;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--text-mid);
+      border: none;
+    }
+    .farm-table td { vertical-align: middle; border-color: var(--cream-dark); }
+    .farm-table tr:hover td { background: var(--cream); }
+
+    /* ── Forms ────────────────────────────────────── */
+    .form-control, .form-select {
+      border: 2px solid var(--cream-dark);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .93rem;
+      transition: border-color .2s;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--green-light);
+      box-shadow: 0 0 0 3px rgba(122,182,72,.15);
+    }
+    .form-label {
+      font-weight: 600;
+      color: var(--text-mid);
+      font-size: .9rem;
+      margin-bottom: 5px;
+    }
+
+    /* ── Alerts ───────────────────────────────────── */
+    .alert { border: none; border-radius: 10px; font-weight: 500; }
+    .alert-success { background: var(--green-pale); color: var(--green-dark); }
+    .alert-info    { background: #dbeafe; color: #1e3a5f; }
+    .alert-warning { background: var(--amber-pale); color: var(--amber-dark); }
+    .alert-danger  { background: var(--red-pale); color: var(--red-soft); }
+
+    /* ── Progress bar ─────────────────────────────── */
+    .progress { border-radius: 30px; background: var(--cream-dark); }
+    .progress-bar.bg-farm { background: var(--green-light); }
+
+    /* ── Responsive ───────────────────────────────── */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-wrapper { margin-left: 0; }
+      .btn-hamburger { display: block; }
+      .page-content { padding: 18px; }
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 1039;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    /* ── Misc ─────────────────────────────────────── */
+    .rupee::before { content: '₹'; }
+    .text-profit { color: #27ae60; }
+    .text-loss   { color: var(--red-soft); }
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 1.4rem;
+      color: var(--green-dark);
+      margin-bottom: 6px;
+    }
+
+    /* Chart container */
+    .chart-box { position: relative; height: 260px; }
+
+    /* Crop image thumbnail */
+    .crop-thumb {
+      width: 44px; height: 44px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid var(--cream-dark);
+    }
+    .crop-thumb-placeholder {
+      width: 44px; height: 44px;
+      background: var(--cream-dark);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; color: var(--text-muted);
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ── Sidebar ─────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <a href="{{ url_for('dashboard') }}" class="sidebar-brand text-decoration-none">
+    <span class="brand-icon">🌾</span>
+    <span class="brand-name">KrishiTrack</span>
+    <span class="brand-sub">Smart Farm Manager</span>
+  </a>
+
+  <nav class="sidebar-nav">
+    <p class="nav-section-label">Overview</p>
+    <a href="{{ url_for('dashboard') }}"
+       class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+
+    <p class="nav-section-label">Farm Records</p>
+    <a href="{{ url_for('crops') }}"
+       class="sidebar-link {% if 'crop' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-flower1"></i> Crops
+    </a>
+    <a href="{{ url_for('expenses') }}"
+       class="sidebar-link {% if 'expense' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-receipt"></i> Expenses
+    </a>
+    <a href="{{ url_for('labour') }}"
+       class="sidebar-link {% if 'labour' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-people"></i> Labour
+    </a>
+    <a href="{{ url_for('harvest') }}"
+       class="sidebar-link {% if 'harvest' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-basket3"></i> Harvest
+    </a>
+
+    <p class="nav-section-label">Analytics</p>
+    <a href="{{ url_for('profit') }}"
+       class="sidebar-link {% if request.endpoint == 'profit' %}active{% endif %}">
+      <i class="bi bi-graph-up-arrow"></i> Profit Summary
+    </a>
+    <a href="{{ url_for('reports') }}"
+       class="sidebar-link {% if request.endpoint == 'reports' %}active{% endif %}">
+      <i class="bi bi-file-earmark-bar-graph"></i> Reports
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div>Logged in as <strong style="color:rgba(255,255,255,.6)">{{ session.get('username','Admin') }}</strong></div>
+    <a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+  </div>
+</aside>
+
+<!-- ── Main Wrapper ─────────────────────────────────────── -->
+<div class="main-wrapper">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <div>
+        <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+        <div class="topbar-subtitle">{% block page_subtitle %}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-subtitle d-none d-md-block">
+        <i class="bi bi-calendar3"></i>
+        {{ now.strftime('%d %b %Y') if now else '' }}
+      </div>
+      <div class="user-badge">
+        <div class="avatar"><i class="bi bi-person-fill"></i></div>
+        Admin
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  <div class="px-4 pt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <!-- Page Content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer style="text-align:center;padding:14px;font-size:.78rem;color:var(--text-muted);border-top:1px solid var(--cream-dark);">
+    KrishiTrack &copy; {{ now.year if now else '2024' }} — Built with ❤️ for farmers
+  </footer>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+
+  // Auto-dismiss alerts
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(el => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 300);
+    });
+  }, 4500);
+</script>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

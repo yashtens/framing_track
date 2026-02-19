@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}📋 Reports & Exports{% endblock %}
+{% block page_subtitle %}Download data as CSV for records & analysis{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Crops Report -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-flower1 text-success"></i> Crop-wise Report
+      </div>
+      <div class="card-body">
+        <p class="text-muted" style="font-size:.9rem;">
+          Exports all crops with their investment, income, and profit/loss figures.
+        </p>
+        <div style="background:var(--green-pale);border-radius:10px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--green-dark);">
+          <strong>Includes:</strong> Crop name, variety, area, seeding date, expected harvest,
+          status, investment, income, profit/loss.
+        </div>
+        <a href="{{ url_for('export_crops') }}" class="btn btn-farm w-100">
+          <i class="bi bi-download me-2"></i>Download Crops CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Report -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-receipt text-warning"></i> Monthly Expense Report
+      </div>
+      <div class="card-body">
+        <p class="text-muted" style="font-size:.9rem;">
+          Filter expenses by month and year, then export as CSV.
+        </p>
+        <form action="{{ url_for('export_expenses') }}" method="GET" class="mb-3">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label">Month</label>
+              <select name="month" class="form-select form-select-sm">
+                <option value="">All Months</option>
+                {% for m, mn in [(1,'January'),(2,'February'),(3,'March'),
+                                  (4,'April'),(5,'May'),(6,'June'),
+                                  (7,'July'),(8,'August'),(9,'September'),
+                                  (10,'October'),(11,'November'),(12,'December')] %}
+                <option value="{{ m }}">{{ mn }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Year</label>
+              <input type="number" name="year" class="form-control form-control-sm"
+                     placeholder="e.g. 2024" min="2020" max="2030">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-amber w-100 mt-3">
+            <i class="bi bi-download me-2"></i>Download Expense CSV
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Labour Report -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-people" style="color:#1a6b8a"></i> Labour Report
+      </div>
+      <div class="card-body">
+        <p class="text-muted" style="font-size:.9rem;">
+          Export all labour records including names, work type, days worked, and payments.
+        </p>
+        <div style="background:#dbeafe;border-radius:10px;padding:12px;margin-bottom:16px;font-size:.82rem;color:#1e3a5f;">
+          <strong>Includes:</strong> Worker name, crop, work type, days worked,
+          payment per day, total payment, date.
+        </div>
+        <a href="{{ url_for('export_labour') }}" class="btn w-100"
+           style="background:#1a6b8a;color:#fff;border-radius:8px;font-weight:600;padding:9px;">
+          <i class="bi bi-download me-2"></i>Download Labour CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Harvest Report -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-basket3 text-success"></i> Harvest Report
+      </div>
+      <div class="card-body">
+        <p class="text-muted" style="font-size:.9rem;">
+          Export all harvest records with production quantities and income earned.
+        </p>
+        <div style="background:var(--green-pale);border-radius:10px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--green-dark);">
+          <strong>Includes:</strong> Crop name, harvest date, production quantity,
+          unit, selling price, total income.
+        </div>
+        <a href="{{ url_for('export_harvest') }}" class="btn btn-farm w-100">
+          <i class="bi bi-download me-2"></i>Download Harvest CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Crops Summary Table Preview -->
+<div class="card mt-4">
+  <div class="card-header d-flex justify-content-between">
+    <span><i class="bi bi-table"></i> Crops Quick Preview</span>
+    <a href="{{ url_for('export_crops') }}" class="btn btn-sm btn-outline-farm">
+      <i class="bi bi-download me-1"></i>Export All
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if crops %}
+    <div class="table-responsive">
+      <table class="table farm-table mb-0">
+        <thead>
+          <tr>
+            <th>Crop</th><th>Status</th><th>Seeded</th>
+            <th class="text-end">Investment</th>
+            <th class="text-end">Income</th>
+            <th class="text-end">P/L</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in crops %}
+          <tr>
+            <td class="fw-700">{{ c.name }}{% if c.variety %} <small class="text-muted fw-400">({{ c.variety }})</small>{% endif %}</td>
+            <td>
+              <span class="badge badge-status {% if c.status=='Growing' %}badge-growing{% else %}badge-harvested{% endif %}">
+                {{ c.status }}
+              </span>
+            </td>
+            <td>{{ c.seeding_date.strftime('%d %b %Y') }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(c.total_investment) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(c.total_income) }}</td>
+            <td class="text-end fw-700 {% if c.profit_loss >= 0 %}text-profit{% else %}text-loss{% endif %}">
+              {% if c.profit_loss >= 0 %}+{% endif %}₹{{ '{:,.0f}'.format(c.profit_loss) }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <p class="mb-0">No crops to show. <a href="{{ url_for('crop_add') }}">Add a crop first.</a></p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit Crop' if crop else 'Add Crop' }}{% endblock %}
+{% block page_title %}{{ '✏️ Edit Crop' if crop else '🌱 Add New Crop' }}{% endblock %}
+{% block page_subtitle %}Fill in the crop details below{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-flower1 text-success"></i>
+        {{ 'Update Crop Details' if crop else 'New Crop Details' }}
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="row g-3">
+            <!-- Crop Name -->
+            <div class="col-sm-6">
+              <label class="form-label">Crop Name *</label>
+              <input type="text" name="name" class="form-control"
+                     placeholder="e.g. Wheat, Rice, Tomato"
+                     value="{{ crop.name if crop else '' }}" required>
+            </div>
+            <!-- Variety -->
+            <div class="col-sm-6">
+              <label class="form-label">Variety / Type</label>
+              <input type="text" name="variety" class="form-control"
+                     placeholder="e.g. GW-322, Hybrid-100"
+                     value="{{ crop.variety if crop else '' }}">
+            </div>
+            <!-- Field Area -->
+            <div class="col-sm-6">
+              <label class="form-label">Field Area (acres)</label>
+              <input type="number" step="0.01" min="0" name="field_area"
+                     class="form-control" placeholder="0.0"
+                     value="{{ crop.field_area if crop else '' }}">
+            </div>
+            <!-- Status -->
+            <div class="col-sm-6">
+              <label class="form-label">Status *</label>
+              <select name="status" class="form-select">
+                <option value="Growing"   {% if crop and crop.status=='Growing'   %}selected{% endif %}>🌱 Growing</option>
+                <option value="Harvested" {% if crop and crop.status=='Harvested' %}selected{% endif %}>🌾 Harvested</option>
+              </select>
+            </div>
+            <!-- Seeding Date -->
+            <div class="col-sm-6">
+              <label class="form-label">Seeding Date *</label>
+              <input type="date" name="seeding_date" class="form-control"
+                     value="{{ crop.seeding_date.strftime('%Y-%m-%d') if crop else '' }}" required>
+            </div>
+            <!-- Expected Harvest -->
+            <div class="col-sm-6">
+              <label class="form-label">Expected Harvest Date</label>
+              <input type="date" name="expected_harvest" class="form-control"
+                     value="{{ crop.expected_harvest.strftime('%Y-%m-%d') if crop and crop.expected_harvest else '' }}">
+            </div>
+            <!-- Fertilizer -->
+            <div class="col-12">
+              <label class="form-label">Fertilizer Details</label>
+              <textarea name="fertilizer_details" class="form-control" rows="2"
+                        placeholder="e.g. DAP 50kg per acre at sowing, Urea 30kg at 30 days">{{ crop.fertilizer_details if crop else '' }}</textarea>
+            </div>
+            <!-- Water Schedule -->
+            <div class="col-12">
+              <label class="form-label">Water / Irrigation Schedule</label>
+              <input type="text" name="water_schedule" class="form-control"
+                     placeholder="e.g. Every 10 days, Daily drip irrigation"
+                     value="{{ crop.water_schedule if crop else '' }}">
+            </div>
+            <!-- Notes -->
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" class="form-control" rows="2"
+                        placeholder="Any additional notes…">{{ crop.notes if crop else '' }}</textarea>
+            </div>
+            <!-- Image Upload -->
+            <div class="col-12">
+              <label class="form-label">Crop Photo (optional)</label>
+              {% if crop and crop.image_path %}
+              <div class="mb-2">
+                <img src="{{ url_for('static', filename='uploads/' + crop.image_path) }}"
+                     style="height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--cream-dark);">
+                <small class="text-muted ms-2">Current photo</small>
+              </div>
+              {% endif %}
+              <input type="file" name="image" class="form-control"
+                     accept="image/*">
+              <small class="text-muted">Max 5MB. PNG, JPG, WEBP supported.</small>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-farm px-5">
+              <i class="bi bi-check-lg me-1"></i>
+              {{ 'Update Crop' if crop else 'Add Crop' }}
+            </button>
+            <a href="{{ url_for('crops') }}" class="btn btn-outline-secondary px-4">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

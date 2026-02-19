@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Expenses{% endblock %}
+{% block page_title %}💸 Expense Tracking{% endblock %}
+{% block page_subtitle %}Monitor all farm expenses across crops{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+  <form class="d-flex gap-2 flex-wrap" method="GET">
+    <select name="crop_id" class="form-select form-select-sm" style="width:200px"
+            onchange="this.form.submit()">
+      <option value="">All Crops</option>
+      {% for crop in crops %}
+      <option value="{{ crop.id }}" {% if selected_crop == crop.id %}selected{% endif %}>
+        {{ crop.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </form>
+  <a href="{{ url_for('expense_add') }}" class="btn btn-farm">
+    <i class="bi bi-plus-lg me-1"></i> Add Expense
+  </a>
+</div>
+
+<!-- Summary Bar -->
+<div class="card mb-4" style="background:linear-gradient(135deg,var(--soil-light),var(--soil));color:#fff;">
+  <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <div style="font-size:.82rem;opacity:.8;">TOTAL INVESTMENT SHOWN</div>
+      <div style="font-family:'Lora',serif;font-size:2rem;font-weight:700;">
+        ₹{{ '{:,.0f}'.format(grand_total) }}
+      </div>
+    </div>
+    <div style="font-size:3rem;opacity:.3;">💰</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if expenses %}
+    <div class="table-responsive">
+      <table class="table farm-table mb-0">
+        <thead>
+          <tr>
+            <th>Crop</th><th>Date</th>
+            <th class="text-end">Seeds</th>
+            <th class="text-end">Fertilizer</th>
+            <th class="text-end">Equipment</th>
+            <th class="text-end">Labour</th>
+            <th class="text-end">Other</th>
+            <th class="text-end">Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr>
+            <td>
+              <span class="fw-700">{{ e.crop.name }}</span>
+            </td>
+            <td>{{ e.date.strftime('%d %b %Y') }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(e.seeds_cost) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(e.fertilizer_cost) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(e.equipment_cost) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(e.labour_cost) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(e.other_expenses) }}</td>
+            <td class="text-end fw-700" style="color:var(--soil);">₹{{ '{:,.0f}'.format(e.total) }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('expense_edit', exp_id=e.id) }}"
+                   class="btn btn-sm btn-outline-farm"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('expense_delete', exp_id=e.id) }}"
+                      onsubmit="return confirm('Delete this expense?')">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--cream-dark);font-weight:700;">
+            <td colspan="7" class="text-end">Grand Total:</td>
+            <td class="text-end" style="color:var(--soil);font-size:1.05rem;">₹{{ '{:,.0f}'.format(grand_total) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <div style="font-size:4rem">🧾</div>
+      <h5 class="mt-2">No expenses recorded</h5>
+      <a href="{{ url_for('expense_add') }}" class="btn btn-farm btn-sm mt-2">Add First Expense</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

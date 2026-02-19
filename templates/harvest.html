@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Harvest{% endblock %}
+{% block page_title %}🌾 Harvest Records{% endblock %}
+{% block page_subtitle %}Track your production and selling income{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+  <form class="d-flex gap-2 flex-wrap" method="GET">
+    <select name="crop_id" class="form-select form-select-sm" style="width:200px"
+            onchange="this.form.submit()">
+      <option value="">All Crops</option>
+      {% for crop in crops %}
+      <option value="{{ crop.id }}" {% if selected_crop == crop.id %}selected{% endif %}>
+        {{ crop.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </form>
+  <a href="{{ url_for('harvest_add') }}" class="btn btn-farm">
+    <i class="bi bi-plus-lg me-1"></i> Record Harvest
+  </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="stat-card stat-green">
+      <div class="stat-icon">⚖️</div>
+      <div class="stat-value">{{ '{:,.1f}'.format(total_production) }}</div>
+      <div class="stat-label">Total Production (kg)</div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="stat-card stat-profit">
+      <div class="stat-icon">🏪</div>
+      <div class="stat-value">₹{{ '{:,.0f}'.format(total_income) }}</div>
+      <div class="stat-label">Total Income</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if harvests %}
+    <div class="table-responsive">
+      <table class="table farm-table mb-0">
+        <thead>
+          <tr>
+            <th>Crop</th><th>Harvest Date</th>
+            <th class="text-end">Production</th>
+            <th class="text-end">Price/Unit</th>
+            <th class="text-end">Total Income</th>
+            <th>Notes</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in harvests %}
+          <tr>
+            <td class="fw-700">{{ h.crop.name }}</td>
+            <td>{{ h.harvest_date.strftime('%d %b %Y') }}</td>
+            <td class="text-end">{{ h.total_production }} {{ h.unit }}</td>
+            <td class="text-end">₹{{ '{:,.2f}'.format(h.selling_price) }}/{{ h.unit }}</td>
+            <td class="text-end fw-700 text-profit">₹{{ '{:,.0f}'.format(h.total_income) }}</td>
+            <td style="max-width:140px;font-size:.82rem;">{{ h.notes or '—' }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('harvest_edit', h_id=h.id) }}"
+                   class="btn btn-sm btn-outline-farm"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('harvest_delete', h_id=h.id) }}"
+                      onsubmit="return confirm('Delete this harvest record?')">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--cream-dark);font-weight:700;">
+            <td colspan="2">Totals:</td>
+            <td class="text-end">{{ '{:,.1f}'.format(total_production) }} kg</td>
+            <td></td>
+            <td class="text-end text-profit" style="font-size:1.05rem;">₹{{ '{:,.0f}'.format(total_income) }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <div style="font-size:4rem">🌾</div>
+      <h5 class="mt-2">No harvest records yet</h5>
+      <a href="{{ url_for('harvest_add') }}" class="btn btn-farm btn-sm mt-2">Record First Harvest</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

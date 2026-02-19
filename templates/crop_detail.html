@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}{{ crop.name }}{% endblock %}
+{% block page_title %}🌿 {{ crop.name }}{% endblock %}
+{% block page_subtitle %}Crop Details & Activity{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <!-- Left Column: Crop Info -->
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      {% if crop.image_path %}
+      <img src="{{ url_for('static', filename='uploads/' + crop.image_path) }}"
+           style="height:200px;object-fit:cover;border-radius:14px 14px 0 0;" alt="{{ crop.name }}">
+      {% else %}
+      <div style="height:160px;background:linear-gradient(135deg,#e8f5d4,#d4edba);
+                  border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:center;font-size:5rem;">
+        🌿
+      </div>
+      {% endif %}
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">{{ crop.name }}</h4>
+          <span class="badge badge-status {% if crop.status=='Growing' %}badge-growing{% else %}badge-harvested{% endif %}">
+            {% if crop.status=='Growing' %}🌱{% else %}🌾{% endif %} {{ crop.status }}
+          </span>
+        </div>
+
+        <table class="table table-sm" style="font-size:.88rem;">
+          <tbody>
+            <tr><td class="text-muted fw-600">Variety</td><td>{{ crop.variety or '—' }}</td></tr>
+            <tr><td class="text-muted fw-600">Field Area</td><td>{{ crop.field_area }} acres</td></tr>
+            <tr><td class="text-muted fw-600">Seeded On</td><td>{{ crop.seeding_date.strftime('%d %b %Y') }}</td></tr>
+            <tr><td class="text-muted fw-600">Harvest By</td>
+                <td>{{ crop.expected_harvest.strftime('%d %b %Y') if crop.expected_harvest else '—' }}</td></tr>
+            <tr><td class="text-muted fw-600">Water</td><td>{{ crop.water_schedule or '—' }}</td></tr>
+          </tbody>
+        </table>
+
+        {% if crop.fertilizer_details %}
+        <div style="background:var(--green-pale);border-radius:8px;padding:10px 12px;font-size:.85rem;">
+          <strong style="color:var(--green-dark);">🌿 Fertilizer</strong><br>
+          {{ crop.fertilizer_details }}
+        </div>
+        {% endif %}
+
+        {% if crop.notes %}
+        <div class="mt-2" style="background:var(--amber-pale);border-radius:8px;padding:10px 12px;font-size:.85rem;">
+          <strong style="color:var(--amber-dark);">📝 Notes</strong><br>{{ crop.notes }}
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('crop_edit', crop_id=crop.id) }}" class="btn btn-farm btn-sm flex-fill">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </a>
+          <form method="POST" action="{{ url_for('crop_delete', crop_id=crop.id) }}"
+                onsubmit="return confirm('Delete {{ crop.name }} and all its data?')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Financial Summary + Records -->
+  <div class="col-lg-8">
+    <!-- Financial Summary -->
+    <div class="row g-3 mb-3">
+      <div class="col-4">
+        <div class="stat-card stat-soil text-center py-3">
+          <div style="font-size:1.4rem;">💸</div>
+          <div class="stat-value" style="font-size:1.3rem;">₹{{ '{:,.0f}'.format(crop.total_investment) }}</div>
+          <div class="stat-label">Investment</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="stat-card stat-amber text-center py-3">
+          <div style="font-size:1.4rem;">🏪</div>
+          <div class="stat-value" style="font-size:1.3rem;">₹{{ '{:,.0f}'.format(crop.total_income) }}</div>
+          <div class="stat-label">Income</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="stat-card {% if crop.profit_loss >= 0 %}stat-profit{% else %}stat-loss{% endif %} text-center py-3">
+          <div style="font-size:1.4rem;">{{ '📈' if crop.profit_loss >= 0 else '📉' }}</div>
+          <div class="stat-value" style="font-size:1.3rem;">
+            {% if crop.profit_loss >= 0 %}+{% endif %}₹{{ '{:,.0f}'.format(crop.profit_loss) }}
+          </div>
+          <div class="stat-label">{{ 'Profit' if crop.profit_loss >= 0 else 'Loss' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expenses -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-receipt text-warning"></i> Expenses</span>
+        <a href="{{ url_for('expense_add') }}" class="btn btn-sm btn-amber">+ Add</a>
+      </div>
+      <div class="card-body p-0">
+        {% if crop.expenses %}
+        <div class="table-responsive">
+          <table class="table farm-table mb-0" style="font-size:.85rem;">
+            <thead><tr><th>Date</th><th>Seeds</th><th>Fertilizer</th><th>Equipment</th><th>Labour</th><th>Other</th><th>Total</th></tr></thead>
+            <tbody>
+              {% for e in crop.expenses %}
+              <tr>
+                <td>{{ e.date.strftime('%d %b') }}</td>
+                <td>₹{{ '{:,.0f}'.format(e.seeds_cost) }}</td>
+                <td>₹{{ '{:,.0f}'.format(e.fertilizer_cost) }}</td>
+                <td>₹{{ '{:,.0f}'.format(e.equipment_cost) }}</td>
+                <td>₹{{ '{:,.0f}'.format(e.labour_cost) }}</td>
+                <td>₹{{ '{:,.0f}'.format(e.other_expenses) }}</td>
+                <td class="fw-700">₹{{ '{:,.0f}'.format(e.total) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3 mb-0">No expenses recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Labour -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-people text-info"></i> Labour</span>
+        <a href="{{ url_for('labour_add') }}" class="btn btn-sm btn-outline-farm">+ Add</a>
+      </div>
+      <div class="card-body p-0">
+        {% if crop.labours %}
+        <div class="table-responsive">
+          <table class="table farm-table mb-0" style="font-size:.85rem;">
+            <thead><tr><th>Name</th><th>Work Type</th><th>Days</th><th>Pay/Day</th><th>Total</th></tr></thead>
+            <tbody>
+              {% for l in crop.labours %}
+              <tr>
+                <td class="fw-700">{{ l.name }}</td>
+                <td>{{ l.work_type or '—' }}</td>
+                <td>{{ l.days_worked }}</td>
+                <td>₹{{ '{:,.0f}'.format(l.payment_per_day) }}</td>
+                <td class="fw-700">₹{{ '{:,.0f}'.format(l.total_payment) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3 mb-0">No labour records yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Harvests -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-basket3 text-success"></i> Harvests</span>
+        <a href="{{ url_for('harvest_add') }}" class="btn btn-sm btn-outline-farm">+ Add</a>
+      </div>
+      <div class="card-body p-0">
+        {% if crop.harvests %}
+        <div class="table-responsive">
+          <table class="table farm-table mb-0" style="font-size:.85rem;">
+            <thead><tr><th>Date</th><th>Production</th><th>Price/Unit</th><th>Income</th></tr></thead>
+            <tbody>
+              {% for h in crop.harvests %}
+              <tr>
+                <td>{{ h.harvest_date.strftime('%d %b %Y') }}</td>
+                <td>{{ h.total_production }} {{ h.unit }}</td>
+                <td>₹{{ '{:,.0f}'.format(h.selling_price) }}/{{ h.unit }}</td>
+                <td class="fw-700 text-profit">₹{{ '{:,.0f}'.format(h.total_income) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3 mb-0">No harvest recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

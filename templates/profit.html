@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}Profit Summary{% endblock %}
+{% block page_title %}📊 Profit & Loss Summary{% endblock %}
+{% block page_subtitle %}Complete financial overview of all crops{% endblock %}
+
+{% block content %}
+
+<!-- Grand Summary -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card stat-soil">
+      <div class="stat-icon">💸</div>
+      <div class="stat-value">₹{{ '{:,.0f}'.format(grand_inv) }}</div>
+      <div class="stat-label">Total Investment</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card stat-amber">
+      <div class="stat-icon">🏪</div>
+      <div class="stat-value">₹{{ '{:,.0f}'.format(grand_inc) }}</div>
+      <div class="stat-label">Total Income</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    {% if grand_pl >= 0 %}
+    <div class="stat-card stat-profit">
+      <div class="stat-icon">📈</div>
+      <div class="stat-value">₹{{ '{:,.0f}'.format(grand_pl) }}</div>
+      <div class="stat-label">Net Profit</div>
+    </div>
+    {% else %}
+    <div class="stat-card stat-loss">
+      <div class="stat-icon">📉</div>
+      <div class="stat-value">-₹{{ '{:,.0f}'.format(grand_pl|abs) }}</div>
+      <div class="stat-label">Net Loss</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Chart -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-bar-chart-line text-success"></i> Crop-wise Profit/Loss</div>
+      <div class="card-body">
+        <div class="chart-box">
+          <canvas id="profitBar"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle text-info"></i> Profitability</div>
+      <div class="card-body">
+        {% for s in summary %}
+        {% if s.investment > 0 %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1" style="font-size:.85rem;">
+            <strong>{{ s.crop.name }}</strong>
+            <span class="{% if s.pct >= 0 %}text-profit{% else %}text-loss{% endif %}">
+              {% if s.pct >= 0 %}+{% endif %}{{ s.pct }}%
+            </span>
+          </div>
+          <div class="progress" style="height:8px;">
+            {% set pct_clamped = [s.pct, 100]|min if s.pct > 0 else 0 %}
+            <div class="progress-bar bg-farm" style="width:{{ pct_clamped }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% if not summary %}
+        <p class="text-muted small text-center">No data yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Crop-wise Table -->
+<div class="card">
+  <div class="card-header"><i class="bi bi-table"></i> Crop-wise Breakdown</div>
+  <div class="card-body p-0">
+    {% if summary %}
+    <div class="table-responsive">
+      <table class="table farm-table mb-0">
+        <thead>
+          <tr>
+            <th>Crop</th><th>Status</th><th>Area</th>
+            <th class="text-end">Investment</th>
+            <th class="text-end">Income</th>
+            <th class="text-end">Profit / Loss</th>
+            <th class="text-end">Return %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in summary %}
+          <tr>
+            <td>
+              <div class="fw-700">{{ s.crop.name }}</div>
+              {% if s.crop.variety %}<small class="text-muted">{{ s.crop.variety }}</small>{% endif %}
+            </td>
+            <td>
+              <span class="badge badge-status {% if s.crop.status=='Growing' %}badge-growing{% else %}badge-harvested{% endif %}">
+                {{ s.crop.status }}
+              </span>
+            </td>
+            <td>{{ s.crop.field_area }} ac</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(s.investment) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(s.income) }}</td>
+            <td class="text-end fw-700 {% if s.profit >= 0 %}text-profit{% else %}text-loss{% endif %}">
+              {% if s.profit >= 0 %}+{% endif %}₹{{ '{:,.0f}'.format(s.profit) }}
+            </td>
+            <td class="text-end fw-700 {% if s.pct >= 0 %}text-profit{% else %}text-loss{% endif %}">
+              {% if s.pct >= 0 %}+{% endif %}{{ s.pct }}%
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--cream-dark);font-weight:700;">
+            <td colspan="3">Totals:</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(grand_inv) }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(grand_inc) }}</td>
+            <td class="text-end {% if grand_pl >= 0 %}text-profit{% else %}text-loss{% endif %}" style="font-size:1.05rem;">
+              {% if grand_pl >= 0 %}+{% endif %}₹{{ '{:,.0f}'.format(grand_pl) }}
+            </td>
+            <td class="text-end">
+              {% if grand_inv > 0 %}
+                {% set overall_pct = ((grand_pl / grand_inv) * 100)|round(1) %}
+                <span class="{% if grand_pl >= 0 %}text-profit{% else %}text-loss{% endif %}">
+                  {% if grand_pl >= 0 %}+{% endif %}{{ overall_pct }}%
+                </span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <div style="font-size:4rem">📊</div>
+      <h5 class="mt-2">No data to show</h5>
+      <p>Add crops, expenses, and harvest data to see your profit summary.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const labels  = {{ summary | map(attribute='crop') | map(attribute='name') | list | tojson }};
+const profits = [{% for s in summary %}{{ s.profit }},{% endfor %}];
+const invest  = [{% for s in summary %}{{ s.investment }},{% endfor %}];
+const incomes = [{% for s in summary %}{{ s.income }},{% endfor %}];
+
+const ctx = document.getElementById('profitBar').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Investment (₹)',
+        data: invest,
+        backgroundColor: 'rgba(107,66,38,.7)',
+        borderRadius: 4,
+      },
+      {
+        label: 'Income (₹)',
+        data: incomes,
+        backgroundColor: 'rgba(232,160,32,.7)',
+        borderRadius: 4,
+      },
+      {
+        label: 'Profit/Loss (₹)',
+        data: profits,
+        backgroundColor: profits.map(v => v >= 0 ? 'rgba(39,174,96,.8)' : 'rgba(231,76,60,.8)'),
+        borderRadius: 4,
+        type: 'bar',
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: v => '₹' + v.toLocaleString('en-IN') }
+      }
+    }
+  }
+});
+</script>
+{% endblock %}

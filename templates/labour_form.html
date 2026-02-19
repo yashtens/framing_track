@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit Labour' if labour else 'Add Labour' }}{% endblock %}
+{% block page_title %}{{ '✏️ Edit Labour' if labour else '👷 Add Labour Record' }}{% endblock %}
+{% block page_subtitle %}Record worker details and payment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-people text-primary"></i> Labour Details
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label">Crop *</label>
+              <select name="crop_id" class="form-select" required>
+                <option value="">Select Crop</option>
+                {% for c in crops %}
+                <option value="{{ c.id }}"
+                  {% if labour and labour.crop_id == c.id %}selected{% endif %}>
+                  {{ c.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Date *</label>
+              <input type="date" name="date" class="form-control"
+                     value="{{ labour.date.strftime('%Y-%m-%d') if labour else '' }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Worker Name *</label>
+              <input type="text" name="name" class="form-control"
+                     placeholder="e.g. Ramesh Kumar"
+                     value="{{ labour.name if labour else '' }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Work Type</label>
+              <input type="text" name="work_type" class="form-control"
+                     placeholder="e.g. Sowing, Watering, Harvesting"
+                     value="{{ labour.work_type if labour else '' }}">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Days Worked *</label>
+              <input type="number" step="0.5" min="0.5" name="days_worked"
+                     class="form-control" id="daysInput"
+                     value="{{ labour.days_worked if labour else 1 }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Payment per Day (₹) *</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" step="0.01" min="0" name="payment_per_day"
+                       class="form-control" id="payInput"
+                       value="{{ labour.payment_per_day if labour else '' }}"
+                       placeholder="0" required>
+              </div>
+            </div>
+
+            <!-- Auto-calculated total -->
+            <div class="col-12">
+              <label class="form-label" style="color:var(--soil);font-weight:700;">
+                Total Payment (₹) — Auto Calculated
+              </label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:var(--amber-pale);color:var(--amber-dark);font-weight:700;">₹</span>
+                <input type="text" id="totalPay" class="form-control"
+                       style="background:var(--amber-pale);font-weight:700;font-size:1.15rem;color:var(--soil);"
+                       readonly>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" class="form-control" rows="2"
+                        placeholder="Optional notes…">{{ labour.notes if labour else '' }}</textarea>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-farm px-5">
+              <i class="bi bi-check-lg me-1"></i>
+              {{ 'Update' if labour else 'Save Labour Record' }}
+            </button>
+            <a href="{{ url_for('labour') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const days = document.getElementById('daysInput');
+  const pay  = document.getElementById('payInput');
+  const tot  = document.getElementById('totalPay');
+
+  function calc() {
+    const total = (parseFloat(days.value)||0) * (parseFloat(pay.value)||0);
+    tot.value = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+  }
+
+  days.addEventListener('input', calc);
+  pay.addEventListener('input', calc);
+  calc();
+</script>
+{% endblock %}

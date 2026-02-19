@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Labour{% endblock %}
+{% block page_title %}👷 Labour Management{% endblock %}
+{% block page_subtitle %}Track workers and payments{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+  <form class="d-flex gap-2 flex-wrap" method="GET">
+    <select name="crop_id" class="form-select form-select-sm" style="width:200px"
+            onchange="this.form.submit()">
+      <option value="">All Crops</option>
+      {% for crop in crops %}
+      <option value="{{ crop.id }}" {% if selected_crop == crop.id %}selected{% endif %}>
+        {{ crop.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </form>
+  <a href="{{ url_for('labour_add') }}" class="btn btn-farm">
+    <i class="bi bi-person-plus me-1"></i> Add Labour
+  </a>
+</div>
+
+<!-- Total Payment Banner -->
+<div class="card mb-4" style="background:linear-gradient(135deg,#1a6b8a,#0e4a63);color:#fff;">
+  <div class="card-body d-flex align-items-center justify-content-between">
+    <div>
+      <div style="font-size:.82rem;opacity:.8;">TOTAL LABOUR PAYMENT</div>
+      <div style="font-family:'Lora',serif;font-size:2rem;font-weight:700;">
+        ₹{{ '{:,.0f}'.format(total_payment) }}
+      </div>
+    </div>
+    <div style="font-size:3rem;opacity:.25;">👷</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if labours %}
+    <div class="table-responsive">
+      <table class="table farm-table mb-0">
+        <thead>
+          <tr>
+            <th>Name</th><th>Crop</th><th>Work Type</th>
+            <th class="text-end">Days</th>
+            <th class="text-end">Pay/Day</th>
+            <th class="text-end">Total Pay</th>
+            <th>Date</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in labours %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div style="width:34px;height:34px;background:var(--green-pale);border-radius:50%;
+                            display:flex;align-items:center;justify-content:center;font-size:.9rem;">
+                  👷
+                </div>
+                <span class="fw-700">{{ l.name }}</span>
+              </div>
+            </td>
+            <td><span class="badge" style="background:var(--green-pale);color:var(--green-dark);">{{ l.crop.name }}</span></td>
+            <td>{{ l.work_type or '—' }}</td>
+            <td class="text-end">{{ l.days_worked }}</td>
+            <td class="text-end">₹{{ '{:,.0f}'.format(l.payment_per_day) }}</td>
+            <td class="text-end fw-700" style="color:#1a6b8a;">₹{{ '{:,.0f}'.format(l.total_payment) }}</td>
+            <td>{{ l.date.strftime('%d %b %Y') }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('labour_edit', lab_id=l.id) }}"
+                   class="btn btn-sm btn-outline-farm"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('labour_delete', lab_id=l.id) }}"
+                      onsubmit="return confirm('Delete this labour record?')">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--cream-dark);font-weight:700;">
+            <td colspan="5" class="text-end">Total Labour Payment:</td>
+            <td class="text-end" style="color:#1a6b8a;font-size:1.05rem;">
+              ₹{{ '{:,.0f}'.format(total_payment) }}
+            </td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <div style="font-size:4rem">👷</div>
+      <h5 class="mt-2">No labour records found</h5>
+      <a href="{{ url_for('labour_add') }}" class="btn btn-farm btn-sm mt-2">Add Labour Record</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

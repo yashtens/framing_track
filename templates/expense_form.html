@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit Expense' if expense else 'Add Expense' }}{% endblock %}
+{% block page_title %}{{ '✏️ Edit Expense' if expense else '💸 Record Expense' }}{% endblock %}
+{% block page_subtitle %}Enter expense details for a crop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-receipt text-warning"></i>
+        Expense Details
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label">Crop *</label>
+              <select name="crop_id" class="form-select" required>
+                <option value="">Select Crop</option>
+                {% for c in crops %}
+                <option value="{{ c.id }}"
+                  {% if expense and expense.crop_id == c.id %}selected{% endif %}>
+                  {{ c.name }} {% if c.variety %}({{ c.variety }}){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Date *</label>
+              <input type="date" name="date" class="form-control"
+                     value="{{ expense.date.strftime('%Y-%m-%d') if expense else '' }}" required>
+            </div>
+          </div>
+
+          <!-- Cost Breakdown -->
+          <div class="mt-4 mb-2">
+            <h6 style="color:var(--green-dark);font-family:'Lora',serif;">💰 Cost Breakdown</h6>
+            <p class="text-muted small">Total is calculated automatically.</p>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label">Seeds Cost (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" step="0.01" min="0" name="seeds_cost"
+                       class="form-control cost-input" placeholder="0"
+                       value="{{ expense.seeds_cost if expense else 0 }}">
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Fertilizer Cost (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" step="0.01" min="0" name="fertilizer_cost"
+                       class="form-control cost-input" placeholder="0"
+                       value="{{ expense.fertilizer_cost if expense else 0 }}">
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Equipment Cost (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" step="0.01" min="0" name="equipment_cost"
+                       class="form-control cost-input" placeholder="0"
+                       value="{{ expense.equipment_cost if expense else 0 }}">
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Labour Cost (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" step="0.01" min="0" name="labour_cost"
+                       class="form-control cost-input" placeholder="0"
+                       value="{{ expense.labour_cost if expense else 0 }}">
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Other Expenses (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" step="0.01" min="0" name="other_expenses"
+                       class="form-control cost-input" placeholder="0"
+                       value="{{ expense.other_expenses if expense else 0 }}">
+              </div>
+            </div>
+            <!-- Auto Total -->
+            <div class="col-sm-6">
+              <label class="form-label" style="color:var(--soil);font-weight:700;">Total Investment (₹) — Auto</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:var(--amber-pale);color:var(--amber-dark);font-weight:700;">₹</span>
+                <input type="text" id="totalDisplay" class="form-control"
+                       style="background:var(--amber-pale);font-weight:700;font-size:1.1rem;color:var(--soil);"
+                       readonly value="{{ expense.total if expense else 0 }}">
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" class="form-control" rows="2"
+                        placeholder="Any notes about this expense…">{{ expense.notes if expense else '' }}</textarea>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-farm px-5">
+              <i class="bi bi-check-lg me-1"></i>
+              {{ 'Update' if expense else 'Save Expense' }}
+            </button>
+            <a href="{{ url_for('expenses') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const inputs = document.querySelectorAll('.cost-input');
+  const total  = document.getElementById('totalDisplay');
+
+  function calcTotal() {
+    let sum = 0;
+    inputs.forEach(inp => sum += parseFloat(inp.value || 0));
+    total.value = '₹' + sum.toLocaleString('en-IN', {minimumFractionDigits: 2});
+  }
+
+  inputs.forEach(inp => inp.addEventListener('input', calcTotal));
+  calcTotal();  // Initial render
+</script>
+{% endblock %}
