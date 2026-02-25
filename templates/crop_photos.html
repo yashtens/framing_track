@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+{% block title %}{{ crop.name }} — Growth Photos{% endblock %}
+{% block page_title %}📸 {{ crop.name }} — Growth Timeline{% endblock %}
+{% block page_subtitle %}Visual week-by-week crop growth tracker{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Timeline Layout ── */
+  .timeline-wrap {
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline-wrap::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--green-light), var(--amber), var(--green-mid));
+    border-radius: 3px;
+  }
+
+  .timeline-week {
+    position: relative;
+    margin-bottom: 36px;
+  }
+  .timeline-week::before {
+    content: '';
+    position: absolute;
+    left: -26px; top: 18px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--green-light);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--green-light);
+    z-index: 1;
+  }
+
+  .week-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .week-badge {
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    color: #fff;
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    font-size: .92rem;
+    padding: 6px 16px;
+    border-radius: 30px;
+    white-space: nowrap;
+  }
+  .week-date {
+    font-size: .82rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Photo Cards ── */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  .photo-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid var(--cream-dark);
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    transition: all .25s ease;
+    cursor: pointer;
+    position: relative;
+  }
+  .photo-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(0,0,0,.15);
+    border-color: var(--green-light);
+    z-index: 10;
+  }
+  .photo-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    transition: transform .3s ease;
+  }
+  .photo-card:hover img { transform: scale(1.05); }
+
+  .photo-card-body {
+    padding: 10px 12px 8px;
+  }
+  .photo-stage-badge {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 5px;
+  }
+  .stage-germination    { background: #d4edba; color: #2d5016; }
+  .stage-seedling       { background: #c8f7c5; color: #1a6b2a; }
+  .stage-vegetative     { background: #b8e8b8; color: #145a14; }
+  .stage-flowering      { background: #fce4ec; color: #880e4f; }
+  .stage-fruiting       { background: #fff3e0; color: #e65100; }
+  .stage-harvest-ready  { background: #fff9c4; color: #f57f17; }
+  .stage-post-harvest   { background: #efebe9; color: #4e342e; }
+  .stage-default        { background: var(--cream-dark); color: var(--text-mid); }
+
+  .photo-caption {
+    font-size: .82rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .photo-date {
+    font-size: .73rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .photo-delete-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s;
+    z-index: 5;
+  }
+  .photo-card:hover .photo-delete-btn { opacity: 1; }
+
+  /* ── Lightbox ── */
+  .lightbox-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.92);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .lightbox-overlay.open { display: flex; }
+  .lightbox-img {
+    max-height: 78vh;
+    max-width: 90vw;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+  .lightbox-caption {
+    color: #fff;
+    margin-top: 16px;
+    text-align: center;
+    font-size: .95rem;
+  }
+  .lightbox-close {
+    position: fixed;
+    top: 18px; right: 24px;
+    background: rgba(255,255,255,.12);
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,.12);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-nav.prev { left: 16px; }
+  .lightbox-nav.next { right: 16px; }
+
+  /* ── Growth Stats ── */
+  .growth-stat {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 2px solid var(--cream-dark);
+    text-align: center;
+  }
+  .growth-stat .val {
+    font-family: 'Lora', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+  .growth-stat .lbl {
+    font-size: .75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+  }
+
+  /* ── Empty State ── */
+  .empty-timeline {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  /* ── Progress bar showing weeks of crop life ── */
+  .crop-life-bar {
+    background: var(--cream-dark);
+    border-radius: 30px;
+    height: 10px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .crop-life-fill {
+    height: 100%;
+    border-radius: 30px;
+    background: linear-gradient(90deg, var(--green-light), var(--amber));
+    transition: width 1s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Top Info Bar ─────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body d-flex align-items-center gap-4 flex-wrap">
+        <!-- Crop Thumbnail -->
+        <div style="width:64px;height:64px;border-radius:12px;overflow:hidden;flex-shrink:0;
+                    background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:2rem;">
+          {% if crop.image_path %}
+          <img src="/uploads/{{ crop.image_path }}" style="width:100%;height:100%;object-fit:cover;">
+          {% else %}🌿{% endif %}
+        </div>
+
+        <div style="flex:1;min-width:160px;">
+          <h5 style="margin:0;color:var(--green-dark);">{{ crop.name }}
+            {% if crop.variety %}<small style="font-weight:400;color:var(--text-muted);font-size:.85rem;">({{ crop.variety }})</small>{% endif %}
+          </h5>
+          <div style="font-size:.82rem;color:var(--text-muted);margin-top:3px;">
+            <i class="bi bi-calendar3"></i> Seeded: <strong>{{ crop.seeding_date.strftime('%d %b %Y') }}</strong>
+            {% if crop.expected_harvest %}
+            &nbsp;·&nbsp; <i class="bi bi-calendar-check"></i> Harvest by: <strong>{{ crop.expected_harvest.strftime('%d %b %Y') }}</strong>
+            {% endif %}
+          </div>
+          <!-- Crop life progress -->
+          {% if crop.expected_harvest %}
+          {% set total_days = (crop.expected_harvest - crop.seeding_date).days %}
+          {% set days_done  = (today - crop.seeding_date).days %}
+          {% set pct        = [[((days_done / total_days) * 100)|int, 0]|max, 100]|min %}
+          <div class="crop-life-bar mt-2">
+            <div class="crop-life-fill" style="width:{{ pct }}%"></div>
+          </div>
+          <div style="font-size:.72rem;color:var(--text-muted);">{{ pct }}% of growing period complete ({{ days_done }} / {{ total_days }} days)</div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex gap-2">
+          <span class="badge badge-status {% if crop.status=='Growing' %}badge-growing{% else %}badge-harvested{% endif %}">
+            {% if crop.status=='Growing' %}🌱{% else %}🌾{% endif %} {{ crop.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="col-lg-4">
+    <div class="row g-2 h-100">
+      <div class="col-6">
+        <div class="growth-stat">
+          <div class="val">{{ photos|length }}</div>
+          <div class="lbl">Total Photos</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="growth-stat">
+          <div class="val">{{ weeks|length }}</div>
+          <div class="lbl">Weeks Tracked</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Action Buttons ─────────────────────────────────────────── -->
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a href="{{ url_for('crop_photo_upload', crop_id=crop.id) }}" class="btn btn-farm">
+    <i class="bi bi-camera-fill me-2"></i>Upload New Photo
+  </a>
+  <a href="{{ url_for('crop_detail', crop_id=crop.id) }}" class="btn btn-outline-farm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Crop
+  </a>
+  <a href="{{ url_for('all_crop_photos') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-images me-1"></i>All Crops Gallery
+  </a>
+</div>
+
+<!-- ── Timeline ───────────────────────────────────────────────── -->
+{% if photos %}
+<div class="timeline-wrap">
+  {% for week_num, week_photos in weeks.items() %}
+  <div class="timeline-week">
+    <!-- Week Header -->
+    <div class="week-header">
+      <span class="week-badge">
+        🌿 Week {{ week_num if week_num > 0 else '?' }}
+      </span>
+      <span class="week-date">
+        {{ week_photos[0].taken_date.strftime('%d %b %Y') }}
+        &nbsp;·&nbsp;
+        {{ week_photos|length }} photo{{ 's' if week_photos|length > 1 else '' }}
+        {% if week_photos[0].growth_stage %}
+        &nbsp;·&nbsp;
+        <span style="color:var(--green-mid);font-weight:700;">{{ week_photos[0].growth_stage }}</span>
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Photo Grid -->
+    <div class="photo-grid">
+      {% for photo in week_photos %}
+      <div class="photo-card" onclick="openLightbox('{{ loop.index0 + loop.prevloop.index0 if loop.prevloop else loop.index0 }}')">
+
+        <!-- Delete Button -->
+        <form method="POST"
+              action="{{ url_for('crop_photo_delete', crop_id=crop.id, photo_id=photo.id) }}"
+              onsubmit="event.stopPropagation(); return confirm('Delete this photo?');"
+              onclick="event.stopPropagation()">
+          <button type="submit" class="photo-delete-btn" title="Delete photo">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </form>
+
+        <img src="/uploads/crop_photos/{{ photo.photo_path }}"
+             alt="{{ photo.caption or 'Week ' + (photo.week_number|string) }}"
+             loading="lazy">
+
+        <div class="photo-card-body">
+          {% if photo.growth_stage %}
+          <span class="photo-stage-badge stage-{{ photo.growth_stage|lower|replace(' ','') }}">
+            {{ photo.growth_stage }}
+          </span>
+          {% endif %}
+          <p class="photo-caption">{{ photo.caption or ('Week ' + (photo.week_number|string) + ' growth') }}</p>
+          <div class="photo-date">
+            <i class="bi bi-calendar3"></i> {{ photo.taken_date.strftime('%d %b %Y') }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Upload More CTA -->
+<div class="text-center mt-4 py-3" style="border-top:2px dashed var(--cream-dark);">
+  <a href="{{ url_for('crop_photo_upload', crop_id=crop.id) }}" class="btn btn-farm">
+    <i class="bi bi-plus-lg me-2"></i>Add This Week's Photo
+  </a>
+  <div style="font-size:.78rem;color:var(--text-muted);margin-top:8px;">
+    Upload weekly to track your crop's growth journey 📸
+  </div>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="empty-timeline">
+  <div style="font-size:5rem;">📷</div>
+  <h4 class="mt-3" style="color:var(--green-dark);">No photos yet</h4>
+  <p>Start tracking <strong>{{ crop.name }}</strong>'s growth by uploading your first photo.</p>
+  <a href="{{ url_for('crop_photo_upload', crop_id=crop.id) }}" class="btn btn-farm mt-2">
+    <i class="bi bi-camera-fill me-2"></i>Upload First Photo
+  </a>
+</div>
+{% endif %}
+
+<!-- ── Lightbox ──────────────────────────────────────────────── -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav prev" onclick="event.stopPropagation(); navLightbox(-1)">‹</button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="">
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+  <button class="lightbox-nav next" onclick="event.stopPropagation(); navLightbox(1)">›</button>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Build all photos array for lightbox
+const allPhotos = [
+  {% for photo in photos %}
+  {
+    src    : "/uploads/crop_photos/{{ photo.photo_path }}",
+    caption: "{{ photo.caption or ('Week ' + (photo.week_number|string) + ' — ' + crop.name) }} · {{ photo.taken_date.strftime('%d %b %Y') }}",
+  },
+  {% endfor %}
+];
+
+let currentIdx = 0;
+
+function openLightbox(idx) {
+  currentIdx = parseInt(idx) || 0;
+  showLightboxPhoto();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showLightboxPhoto() {
+  if (!allPhotos.length) return;
+  currentIdx = ((currentIdx % allPhotos.length) + allPhotos.length) % allPhotos.length;
+  document.getElementById('lightboxImg').src        = allPhotos[currentIdx].src;
+  document.getElementById('lightboxCaption').textContent = allPhotos[currentIdx].caption;
+}
+
+function navLightbox(dir) {
+  currentIdx += dir;
+  showLightboxPhoto();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight') navLightbox(1);
+  if (e.key === 'ArrowLeft')  navLightbox(-1);
+  if (e.key === 'Escape')     closeLightbox();
+});
+
+// Make each photo card open lightbox with correct index
+document.querySelectorAll('.photo-card').forEach((card, i) => {
+  card.onclick = (e) => {
+    // Don't open lightbox if delete form was clicked
+    if (e.target.closest('form') || e.target.closest('button[type="submit"]')) return;
+    openLightbox(i);
+  };
+});
+</script>
+{% endblock %}

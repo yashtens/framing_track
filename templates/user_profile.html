@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}👤 My Profile{% endblock %}
+{% block page_subtitle %}Manage your account details and password{% endblock %}
+{% block extra_head %}
+<style>
+.avatar-circle{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green-mid),var(--green-dark));display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:700;color:#fff;margin:0 auto 12px;box-shadow:0 6px 20px rgba(74,124,47,.4);}
+.profile-section{border-radius:14px;border:2px solid var(--cream-dark);background:#fff;padding:24px;margin-bottom:16px;}
+.profile-section h6{font-family:'Lora',serif;color:var(--green-dark);font-size:1rem;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--cream-dark);}
+.info-row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--cream-dark);}
+.info-row:last-child{border-bottom:none;}
+.info-icon{width:36px;height:36px;border-radius:10px;background:var(--green-pale);display:flex;align-items:center;justify-content:center;color:var(--green-mid);flex-shrink:0;}
+.info-label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;}
+.info-value{font-weight:700;color:var(--green-dark);font-size:.9rem;}
+.role-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.role-admin{background:var(--amber-pale);color:var(--amber-dark);}
+.role-farmer{background:var(--green-pale);color:var(--green-dark);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="row g-4 justify-content-center">
+
+  <!-- LEFT: Profile Summary Card -->
+  <div class="col-lg-4">
+    <div class="card text-center p-4">
+      <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
+      <h5 style="font-family:'Lora',serif;color:var(--green-dark);">{{ user.full_name }}</h5>
+      <div class="mb-2">
+        <span class="role-badge role-{{ user.role }}">
+          {% if user.role == 'admin' %}👑 Admin{% else %}🌾 Farmer{% endif %}
+        </span>
+      </div>
+      <div style="font-size:.82rem;color:var(--text-muted);">@{{ user.username }}</div>
+
+      <div class="mt-3">
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-envelope"></i></div>
+          <div>
+            <div class="info-label">Email</div>
+            <div class="info-value">{{ user.email }}</div>
+          </div>
+        </div>
+        {% if user.phone %}
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-phone"></i></div>
+          <div>
+            <div class="info-label">Phone</div>
+            <div class="info-value">{{ user.phone }}</div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-calendar3"></i></div>
+          <div>
+            <div class="info-label">Member Since</div>
+            <div class="info-value">{{ user.created_at.strftime('%d %b %Y') }}</div>
+          </div>
+        </div>
+        {% if user.last_login %}
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="info-label">Last Login</div>
+            <div class="info-value">{{ user.last_login.strftime('%d %b %Y, %I:%M %p') }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Edit Forms -->
+  <div class="col-lg-8">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} mb-3" style="border-radius:10px;border:none;">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Update Profile Info -->
+    <div class="profile-section">
+      <h6><i class="bi bi-person-gear me-2"></i>Update Profile Info</h6>
+      <form method="POST">
+        <input type="hidden" name="action" value="update_info">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="full_name" class="form-control"
+                   value="{{ user.full_name }}" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" name="phone" class="form-control"
+                   value="{{ user.phone or '' }}" placeholder="10-digit mobile">
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" value="{{ user.username }}"
+                   disabled style="background:var(--cream);color:var(--text-muted);">
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">Username cannot be changed</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" value="{{ user.email }}"
+                   disabled style="background:var(--cream);color:var(--text-muted);">
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-farm">
+              <i class="bi bi-check2 me-2"></i>Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="profile-section">
+      <h6><i class="bi bi-lock me-2"></i>Change Password</h6>
+      <form method="POST">
+        <input type="hidden" name="action" value="change_password">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Current Password</label>
+            <input type="password" name="old_password" class="form-control"
+                   placeholder="Enter current password" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">New Password</label>
+            <input type="password" name="new_password" class="form-control"
+                   placeholder="Min 6 characters" required minlength="6" id="newPwd">
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" name="confirm_password" class="form-control"
+                   placeholder="Repeat new password" required id="confPwd">
+            <div id="matchMsg" style="font-size:.72rem;margin-top:3px;"></div>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-amber">
+              <i class="bi bi-key me-2"></i>Update Password
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-farm">
+        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.getElementById('confPwd').addEventListener('input', function() {
+  const m = document.getElementById('matchMsg');
+  if (this.value === document.getElementById('newPwd').value) {
+    m.textContent = '✅ Passwords match'; m.style.color = '#16a34a';
+  } else {
+    m.textContent = '❌ Does not match'; m.style.color = '#dc2626';
+  }
+});
+</script>
+{% endblock %}

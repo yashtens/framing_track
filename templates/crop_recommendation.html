@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}Crop Advisor{% endblock %}
+{% block page_title %}⭐ Smart Crop Advisor{% endblock %}
+{% block page_subtitle %}Find the most profitable crop for your land, season and soil{% endblock %}
+{% block extra_head %}
+<style>
+.form-card{background:linear-gradient(135deg,#1a3209,#2d5016);border-radius:18px;padding:28px;color:#fff;}
+.form-label-w{color:#d4edba;font-weight:700;font-size:.85rem;margin-bottom:6px;display:block;}
+.result-card{border-radius:16px;border:2px solid var(--cream-dark);background:#fff;padding:20px;transition:all .2s;position:relative;overflow:hidden;}
+.result-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,.12);border-color:var(--green-light);}
+.result-card .rank{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:var(--green-mid);color:#fff;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.result-card.rank-1{border-color:gold;box-shadow:0 0 0 2px gold;}
+.result-card.rank-2{border-color:silver;}
+.result-card.rank-3{border-color:#cd7f32;}
+.metric-box{background:var(--cream);border-radius:10px;padding:10px 12px;text-align:center;}
+.metric-box .val{font-family:'Lora',serif;font-size:1.15rem;font-weight:700;color:var(--green-dark);}
+.metric-box .lbl{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;}
+.profit-bar{height:8px;border-radius:10px;background:var(--cream-dark);margin-top:6px;overflow:hidden;}
+.profit-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green-mid),#7ab648);}
+.badge-season{padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.season-kharif{background:#dbeafe;color:#1e40af;}
+.season-rabi{background:#fef9c3;color:#854d0e;}
+.season-summer{background:#fee2e2;color:#991b1b;}
+.season-all{background:var(--green-pale);color:var(--green-dark);}
+.water-badge{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;color:var(--text-muted);margin-top:4px;}
+</style>
+{% endblock %}
+{% block content %}
+<!-- Search Form -->
+<div class="form-card mb-4">
+  <div class="row align-items-end g-3">
+    <div class="col-12 mb-2">
+      <h5 style="color:#d4edba;font-family:'Lora',serif;margin:0;">🔍 Tell us about your farm</h5>
+      <p style="opacity:.7;font-size:.85rem;margin:4px 0 0;">We'll recommend the most profitable crops based on your inputs</p>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <span class="form-label-w">🌤️ Season *</span>
+      <select name="season" id="fSeason" class="form-select" required>
+        <option value="">Select season</option>
+        <option value="Kharif" {% if season=='Kharif' %}selected{% endif %}>☔ Kharif (Jun–Oct)</option>
+        <option value="Rabi"   {% if season=='Rabi' %}selected{% endif %}>❄️ Rabi (Nov–Mar)</option>
+        <option value="Summer" {% if season=='Summer' %}selected{% endif %}>☀️ Summer (Mar–Jun)</option>
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <span class="form-label-w">🪨 Soil Type *</span>
+      <select name="soil_type" id="fSoil" class="form-select">
+        <option value="Any">Any Soil</option>
+        <option value="Loamy"  {% if soil=='Loamy' %}selected{% endif %}>Loamy (Most fertile)</option>
+        <option value="Clay"   {% if soil=='Clay' %}selected{% endif %}>Clay (Water retaining)</option>
+        <option value="Sandy"  {% if soil=='Sandy' %}selected{% endif %}>Sandy (Dry regions)</option>
+        <option value="Black"  {% if soil=='Black' %}selected{% endif %}>Black (Cotton belt)</option>
+        <option value="Red"    {% if soil=='Red' %}selected{% endif %}>Red (South India)</option>
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <span class="form-label-w">💧 Water Availability</span>
+      <select name="water_req" id="fWater" class="form-select">
+        <option value="">Any</option>
+        <option value="Low"    {% if water=='Low' %}selected{% endif %}>Low (Rain-fed / Bore-well)</option>
+        <option value="Medium" {% if water=='Medium' %}selected{% endif %}>Medium (Canal / Well)</option>
+        <option value="High"   {% if water=='High' %}selected{% endif %}>High (Irrigation assured)</option>
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <button onclick="submitForm()" class="btn w-100" style="background:#7ab648;color:#fff;font-weight:700;padding:12px;border-radius:10px;font-size:1rem;">
+        🌾 Find Best Crops
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Results -->
+{% if searched %}
+  {% if results %}
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h5 style="font-family:'Lora',serif;color:var(--green-dark);margin:0;">
+      🏆 {{ results|length }} Crops Recommended for {{ season }} Season
+    </h5>
+    <span style="font-size:.8rem;color:var(--text-muted);">Sorted by highest profit per acre</span>
+  </div>
+  <div class="row g-3">
+    {% for rec in results %}
+    <div class="col-md-6 col-lg-4">
+      <div class="result-card rank-{{ loop.index if loop.index <= 3 else '' }}">
+        <div class="rank">{{ loop.index }}</div>
+        <!-- Header -->
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div style="font-size:2.5rem;">{{ rec.emoji }}</div>
+          <div>
+            <h5 style="margin:0;color:var(--green-dark);">{{ rec.crop_name }}</h5>
+            <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
+              <span class="badge-season season-{{ rec.season|lower }}">{{ rec.season }}</span>
+              <span class="badge-season" style="background:var(--cream-dark);color:var(--text-mid);">{{ rec.soil_type }} soil</span>
+            </div>
+            <div class="water-badge">
+              {% if rec.water_req=='Low' %}💧{% elif rec.water_req=='Medium' %}💧💧{% else %}💧💧💧{% endif %}
+              {{ rec.water_req }} water need
+            </div>
+          </div>
+        </div>
+        <!-- Metrics -->
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="metric-box">
+              <div class="val">{{ rec.avg_yield_acre }} q</div>
+              <div class="lbl">Yield / Acre</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="metric-box">
+              <div class="val">₹{{ '{:,.0f}'.format(rec.avg_price_quintal) }}</div>
+              <div class="lbl">Price / Quintal</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="metric-box">
+              <div class="val" style="color:var(--soil);">₹{{ '{:,.0f}'.format(rec.cost_per_acre) }}</div>
+              <div class="lbl">Cost / Acre</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="metric-box">
+              <div class="val" style="color:{% if rec.expected_profit_per_acre > 0 %}#16a34a{% else %}#dc2626{% endif %};">
+                ₹{{ '{:,.0f}'.format(rec.expected_profit_per_acre) }}
+              </div>
+              <div class="lbl">Profit / Acre</div>
+            </div>
+          </div>
+        </div>
+        <!-- ROI Bar -->
+        <div style="font-size:.78rem;color:var(--text-muted);">ROI: {{ rec.roi_percent }}% &nbsp;|&nbsp; Duration: {{ rec.duration_days }} days</div>
+        <div class="profit-bar mt-1">
+          <div class="profit-fill" style="width:{{ [rec.roi_percent, 100]|min }}%"></div>
+        </div>
+        {% if rec.description %}
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:10px;border-top:1px solid var(--cream-dark);padding-top:8px;">
+          {{ rec.description }}
+        </div>
+        {% endif %}
+        <!-- CTA -->
+        <div class="mt-3">
+          <a href="{{ url_for('crop_add') }}" class="btn btn-sm btn-farm w-100">
+            + Add {{ rec.crop_name }} to My Farm
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card text-center py-5">
+    <div style="font-size:3.5rem;">🔍</div>
+    <h5 class="mt-3">No crops found for this combination</h5>
+    <p class="text-muted">Try selecting "Any Soil" or removing the water filter to see more options.</p>
+  </div>
+  {% endif %}
+{% else %}
+<!-- Info Cards -->
+<div class="row g-3">
+  {% for item in [
+    ('☔', 'Kharif Season (Jun-Oct)', 'Rice, Cotton, Maize, Soyabean, Groundnut, Bajra, Chilli, Turmeric', '#dbeafe', '#1e40af'),
+    ('❄️', 'Rabi Season (Nov-Mar)', 'Wheat, Mustard, Potato, Onion, Bengalgram, Garlic', '#fef9c3', '#854d0e'),
+    ('☀️', 'Summer Season (Mar-Jun)', 'Tomato, Watermelon, Cucumber, Groundnut, Maize', '#fee2e2', '#991b1b'),
+  ] %}
+  <div class="col-md-4">
+    <div class="card h-100 p-4 text-center">
+      <div style="font-size:2.8rem;">{{ item[0] }}</div>
+      <h6 style="color:var(--green-dark);margin:10px 0 6px;">{{ item[1] }}</h6>
+      <div style="font-size:.82rem;color:var(--text-muted);">{{ item[2] }}</div>
+      <div class="mt-3">
+        <button onclick="document.getElementById('fSeason').value='{{ item[1].split(' ')[0] }}';submitForm()"
+          style="background:{{ item[3] }};color:{{ item[4] }};border:none;border-radius:8px;padding:6px 16px;font-weight:700;cursor:pointer;font-size:.82rem;">
+          View {{ item[1].split(' ')[0] }} Crops →
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function submitForm() {
+  const season = document.getElementById('fSeason').value;
+  if (!season) { alert('Please select a season first.'); return; }
+  const soil  = document.getElementById('fSoil').value;
+  const water = document.getElementById('fWater').value;
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = window.location.href;
+  [['season',season],['soil_type',soil],['water_req',water]].forEach(([n,v]) => {
+    const i = document.createElement('input'); i.type='hidden'; i.name=n; i.value=v; f.appendChild(i);
+  });
+  document.body.appendChild(f); f.submit();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% block title %}Upload Photo — {{ crop.name }}{% endblock %}
+{% block page_title %}📸 Upload Growth Photo{% endblock %}
+{% block page_subtitle %}{{ crop.name }} — Week {{ suggested_week }} progress{% endblock %}
+
+{% block extra_head %}
+<style>
+  .upload-zone {
+    border: 3px dashed var(--green-light);
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    background: var(--green-pale);
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    background: #c4e8a0;
+    border-color: var(--green-dark);
+    transform: scale(1.01);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-zone .upload-icon { font-size: 3.5rem; }
+  .upload-zone .upload-text {
+    font-weight: 700;
+    color: var(--green-dark);
+    font-size: 1.05rem;
+    margin-top: 12px;
+  }
+  .upload-zone .upload-sub {
+    color: var(--text-muted);
+    font-size: .82rem;
+    margin-top: 4px;
+  }
+
+  #previewBox {
+    display: none;
+    margin-top: 16px;
+  }
+  #previewImg {
+    max-height: 260px;
+    max-width: 100%;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  }
+
+  .stage-btn {
+    padding: 8px 16px;
+    border: 2px solid var(--cream-dark);
+    border-radius: 30px;
+    font-size: .82rem;
+    font-weight: 600;
+    background: #fff;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .stage-btn:hover, .stage-btn.selected {
+    border-color: var(--green-light);
+    background: var(--green-pale);
+    color: var(--green-dark);
+  }
+  .stage-btn.selected {
+    background: var(--green-mid);
+    color: #fff;
+    border-color: var(--green-mid);
+  }
+
+  .week-display {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+
+  .tip-box {
+    background: var(--amber-pale);
+    border-left: 4px solid var(--amber);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: .85rem;
+    color: var(--amber-dark);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <!-- Crop Info Strip -->
+    <div class="card mb-4" style="background:linear-gradient(135deg,var(--green-dark),var(--green-mid));color:#fff;">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div style="font-size:2.5rem;">🌿</div>
+        <div>
+          <div style="font-family:'Lora',serif;font-weight:700;font-size:1.1rem;color:#d4edba;">{{ crop.name }}</div>
+          <div style="opacity:.75;font-size:.85rem;">
+            Seeded: {{ crop.seeding_date.strftime('%d %b %Y') }}
+            &nbsp;·&nbsp;
+            {{ crop.field_area }} acres
+            &nbsp;·&nbsp;
+            <span style="background:rgba(255,255,255,.2);padding:2px 8px;border-radius:10px;">
+              {{ crop.status }}
+            </span>
+          </div>
+        </div>
+        <div class="ms-auto text-end">
+          <div style="font-size:.72rem;opacity:.65;text-transform:uppercase;letter-spacing:1px;">Suggested Week</div>
+          <div style="font-family:'Lora',serif;font-size:2rem;font-weight:700;color:#d4edba;">{{ suggested_week }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-camera-fill text-success"></i> Upload Weekly Growth Photo
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+
+          <!-- Photo Upload Zone -->
+          <div class="mb-4">
+            <label class="form-label">Select Photo *</label>
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" name="photo" id="photoInput"
+                     accept="image/*" required onchange="previewPhoto(this)">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">Tap to choose photo or drag & drop</div>
+              <div class="upload-sub">JPG, PNG, WEBP — Max 5MB</div>
+            </div>
+            <!-- Preview -->
+            <div id="previewBox" class="text-center">
+              <img id="previewImg" src="" alt="Preview">
+              <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        onclick="clearPhoto()">
+                  <i class="bi bi-x-lg me-1"></i>Remove Photo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <!-- Date Taken -->
+            <div class="col-sm-6">
+              <label class="form-label">Date Photo Taken *</label>
+              <input type="date" name="taken_date" class="form-control"
+                     id="takenDate"
+                     value="{{ today.strftime('%Y-%m-%d') }}"
+                     max="{{ today.strftime('%Y-%m-%d') }}"
+                     onchange="updateWeekDisplay()"
+                     required>
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">
+                Week number auto-calculated from seeding date
+              </div>
+            </div>
+
+            <!-- Week Number (auto) -->
+            <div class="col-sm-6">
+              <label class="form-label">Week Number (Auto)</label>
+              <div style="background:var(--green-pale);border-radius:10px;padding:12px 16px;
+                          border:2px solid var(--green-light);text-align:center;">
+                <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;">Growth Week</div>
+                <div class="week-display" id="weekDisplay">{{ suggested_week }}</div>
+              </div>
+            </div>
+
+            <!-- Growth Stage -->
+            <div class="col-12">
+              <label class="form-label">Growth Stage</label>
+              <input type="hidden" name="growth_stage" id="growthStageInput" value="">
+              <div class="d-flex flex-wrap gap-2 mt-1">
+                {% set stage_emojis = {
+                  'Germination': '🌰',
+                  'Seedling': '🌱',
+                  'Vegetative Growth': '🌿',
+                  'Flowering': '🌸',
+                  'Fruiting': '🍅',
+                  'Harvest Ready': '🌾',
+                  'Post Harvest': '🍂'
+                } %}
+                {% for stage in growth_stages %}
+                <button type="button" class="stage-btn"
+                        onclick="selectStage(this, '{{ stage }}')">
+                  {{ stage_emojis.get(stage, '🌿') }} {{ stage }}
+                </button>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Caption -->
+            <div class="col-12">
+              <label class="form-label">Caption / Note</label>
+              <input type="text" name="caption" class="form-control"
+                     placeholder="e.g. Healthy growth, leaves turning green, first flower visible"
+                     maxlength="255">
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">
+                Describe what you observe in this photo
+              </div>
+            </div>
+          </div>
+
+          <!-- Tip Box -->
+          <div class="tip-box mt-4">
+            <strong>💡 Photography Tips for Better Tracking:</strong>
+            <ul style="margin:6px 0 0;padding-left:18px;">
+              <li>Take photos at the <strong>same time each week</strong> (morning is best)</li>
+              <li>Stand at the <strong>same distance and angle</strong> each time</li>
+              <li>Include a <strong>ruler or hand</strong> in frame for size reference</li>
+              <li>Take both <strong>wide shot</strong> (whole field) and <strong>close-up</strong> (leaves/fruit)</li>
+            </ul>
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-farm px-5">
+              <i class="bi bi-cloud-upload me-2"></i>Upload Photo
+            </button>
+            <a href="{{ url_for('crop_photos', crop_id=crop.id) }}"
+               class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const seedingDate = new Date('{{ crop.seeding_date.strftime("%Y-%m-%d") }}');
+
+function updateWeekDisplay() {
+  const takenDate = new Date(document.getElementById('takenDate').value);
+  if (isNaN(takenDate.getTime())) return;
+  const diffMs   = takenDate - seedingDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const week     = Math.max(1, Math.floor(diffDays / 7) + 1);
+  document.getElementById('weekDisplay').textContent = week;
+}
+
+function previewPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File is too large. Max size is 5MB.');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewBox').style.display = 'block';
+    document.getElementById('uploadZone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+  document.getElementById('photoInput').value = '';
+  document.getElementById('previewBox').style.display = 'none';
+  document.getElementById('uploadZone').style.display = 'block';
+}
+
+function selectStage(btn, stage) {
+  document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('growthStageInput').value = stage;
+}
+
+// Drag & drop visual feedback
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('photoInput').files = dt.files;
+    previewPhoto(document.getElementById('photoInput'));
+  }
+});
+
+// Init week display
+updateWeekDisplay();
+</script>
+{% endblock %}

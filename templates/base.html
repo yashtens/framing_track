@@ -35,7 +35,7 @@
       --text-muted:   #7a8c6a;
       --red-soft:     #c0392b;
       --red-pale:     #fdecea;
-      --sidebar-w:    260px;
+      --sidebar-w:    268px;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -49,357 +49,306 @@
 
     h1,h2,h3,h4,h5 { font-family: 'Lora', serif; font-weight: 700; }
 
-    /* ── Sidebar ─────────────────────────────────── */
+    /* ────────────────────────────────────────────────
+       SIDEBAR
+    ──────────────────────────────────────────────── */
     .sidebar {
       position: fixed;
       top: 0; left: 0;
       width: var(--sidebar-w);
       height: 100vh;
-      background: linear-gradient(175deg, var(--green-dark) 0%, #1a3209 100%);
+      background: linear-gradient(175deg, #1a3209 0%, #0f1f05 100%);
       display: flex;
       flex-direction: column;
       z-index: 1040;
       overflow-y: auto;
+      overflow-x: hidden;
       transition: transform .3s ease;
-      box-shadow: 4px 0 24px rgba(0,0,0,.25);
+      box-shadow: 4px 0 28px rgba(0,0,0,.3);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.1) transparent;
     }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
 
+    /* Brand */
     .sidebar-brand {
-      padding: 28px 24px 20px;
-      border-bottom: 1px solid rgba(255,255,255,.12);
+      padding: 24px 22px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
       text-decoration: none;
-    }
-    .sidebar-brand .brand-icon {
-      font-size: 2rem;
       display: block;
-      margin-bottom: 4px;
+      flex-shrink: 0;
     }
-    .sidebar-brand .brand-name {
-      font-family: 'Lora', serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--green-pale);
-      letter-spacing: .5px;
-      display: block;
+    .sidebar-brand .brand-icon  { font-size: 2rem; display: block; margin-bottom: 4px; }
+    .sidebar-brand .brand-name  {
+      font-family: 'Lora', serif; font-size: 1.3rem; font-weight: 700;
+      color: var(--green-pale); letter-spacing: .5px; display: block;
     }
-    .sidebar-brand .brand-sub {
-      font-size: .72rem;
-      color: rgba(255,255,255,.45);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
+    .sidebar-brand .brand-sub   {
+      font-size: .68rem; color: rgba(255,255,255,.38);
+      text-transform: uppercase; letter-spacing: 1.5px;
     }
 
-    .sidebar-nav { flex: 1; padding: 16px 0; }
+    /* Nav */
+    .sidebar-nav { flex: 1; padding: 10px 0 8px; }
 
     .nav-section-label {
-      font-size: .65rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: rgba(255,255,255,.3);
-      text-transform: uppercase;
-      padding: 16px 24px 6px;
+      font-size: .62rem; font-weight: 700; letter-spacing: 2px;
+      color: rgba(255,255,255,.28); text-transform: uppercase;
+      padding: 14px 22px 5px; margin: 0;
     }
 
     .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 24px;
-      color: rgba(255,255,255,.72);
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 22px;
+      color: rgba(255,255,255,.68);
       text-decoration: none;
-      font-size: .92rem;
-      font-weight: 500;
+      font-size: .88rem; font-weight: 500;
       border-left: 3px solid transparent;
-      transition: all .2s ease;
+      transition: all .18s ease;
+      white-space: nowrap;
     }
     .sidebar-link:hover {
-      background: rgba(255,255,255,.08);
+      background: rgba(255,255,255,.07);
       color: #fff;
       border-left-color: var(--amber);
     }
     .sidebar-link.active {
-      background: rgba(122,182,72,.18);
+      background: rgba(122,182,72,.16);
       color: var(--green-pale);
       border-left-color: var(--green-light);
+      font-weight: 700;
     }
-    .sidebar-link i { font-size: 1.1rem; width: 22px; }
+    .sidebar-link i { font-size: 1rem; width: 20px; flex-shrink: 0; }
 
+    /* Sidebar pill badges */
+    .nav-pill {
+      margin-left: auto;
+      font-size: .58rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: .4px;
+      flex-shrink: 0;
+    }
+    .pill-live  { background: #e8a020; color: #fff; }
+    .pill-new   { background: var(--green-mid); color: #fff; }
+    .pill-ai    { background: linear-gradient(90deg,#6366f1,#8b5cf6); color: #fff; }
+
+    /* Sidebar footer — User info */
     .sidebar-footer {
-      padding: 16px 24px;
+      padding: 14px 18px;
       border-top: 1px solid rgba(255,255,255,.1);
-      font-size: .8rem;
-      color: rgba(255,255,255,.35);
+      flex-shrink: 0;
     }
-    .sidebar-footer a {
-      color: rgba(255,255,255,.5);
-      text-decoration: none;
+    .sidebar-user-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
     }
-    .sidebar-footer a:hover { color: #fff; }
+    .sidebar-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--green-mid);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .95rem; color: #fff;
+      flex-shrink: 0; text-transform: uppercase;
+    }
+    .sidebar-username {
+      font-weight: 700; font-size: .85rem; color: #d4edba;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sidebar-userrole {
+      font-size: .68rem; opacity: .55; white-space: nowrap;
+    }
+    .sidebar-admin-tag {
+      background: var(--amber); color: #fff;
+      padding: 1px 6px; border-radius: 8px;
+      font-size: .58rem; font-weight: 700;
+      margin-left: 4px; vertical-align: middle;
+    }
+    .sidebar-action-btns { display: flex; gap: 8px; }
+    .sidebar-action-btns a {
+      flex: 1; text-align: center;
+      background: rgba(255,255,255,.09);
+      border-radius: 8px; padding: 7px 4px;
+      font-size: .75rem; color: rgba(255,255,255,.7);
+      text-decoration: none; transition: all .15s;
+    }
+    .sidebar-action-btns a:hover { background: rgba(255,255,255,.16); color: #fff; }
 
-    /* ── Main Content ─────────────────────────────── */
+    /* ────────────────────────────────────────────────
+       MAIN WRAPPER
+    ──────────────────────────────────────────────── */
     .main-wrapper {
       margin-left: var(--sidebar-w);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       transition: margin-left .3s ease;
     }
 
+    /* Topbar */
     .topbar {
       background: #fff;
       border-bottom: 2px solid var(--cream-dark);
-      padding: 14px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 12px rgba(0,0,0,.05);
+      padding: 13px 26px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 14px rgba(0,0,0,.05);
+      gap: 12px;
     }
+    .topbar-left  { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
-    .topbar-left { display: flex; align-items: center; gap: 14px; }
     .topbar-title {
-      font-family: 'Lora', serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--green-dark);
-      margin: 0;
+      font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 700;
+      color: var(--green-dark); margin: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .topbar-subtitle {
-      font-size: .78rem;
-      color: var(--text-muted);
-      margin: 0;
-    }
-
-    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .topbar-subtitle { font-size: .76rem; color: var(--text-muted); margin: 0; }
 
     .btn-hamburger {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      color: var(--green-dark);
-      cursor: pointer;
+      display: none; background: none; border: none;
+      font-size: 1.4rem; color: var(--green-dark); cursor: pointer; padding: 0;
     }
 
-    .user-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--green-pale);
-      border-radius: 40px;
-      padding: 6px 14px 6px 8px;
-      font-size: .85rem;
-      font-weight: 600;
-      color: var(--green-dark);
+    /* Topbar user badge */
+    .topbar-user {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--green-pale); border-radius: 40px;
+      padding: 5px 14px 5px 7px;
+      font-size: .83rem; font-weight: 700; color: var(--green-dark);
+      text-decoration: none; transition: background .15s;
     }
-    .user-badge .avatar {
-      width: 30px; height: 30px;
-      background: var(--green-mid);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: .9rem;
+    .topbar-user:hover { background: #c6e6a6; color: var(--green-dark); }
+    .topbar-user .t-avatar {
+      width: 28px; height: 28px; background: var(--green-mid);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .82rem; font-weight: 700; text-transform: uppercase;
     }
 
-    .page-content { padding: 28px; flex: 1; }
+    .topbar-date {
+      font-size: .78rem; color: var(--text-muted);
+      display: flex; align-items: center; gap: 5px;
+    }
 
-    /* ── Cards ────────────────────────────────────── */
+    /* Page content */
+    .page-content { padding: 26px; flex: 1; }
+
+    /* ────────────────────────────────────────────────
+       CARDS
+    ──────────────────────────────────────────────── */
     .card {
-      border: none;
-      border-radius: 14px;
-      box-shadow: 0 2px 16px rgba(0,0,0,.07);
-      background: #fff;
+      border: none; border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07); background: #fff;
     }
     .card-header {
       background: transparent;
       border-bottom: 1.5px solid var(--cream-dark);
-      padding: 16px 22px;
-      font-family: 'Lora', serif;
-      font-weight: 700;
-      font-size: 1.05rem;
-      color: var(--green-dark);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      padding: 15px 20px;
+      font-family: 'Lora', serif; font-weight: 700;
+      font-size: 1rem; color: var(--green-dark);
+      display: flex; align-items: center; gap: 8px;
     }
+    .card-body { padding: 20px; }
 
-    /* ── Stat Cards ───────────────────────────────── */
+    /* Stat Cards */
     .stat-card {
-      border-radius: 14px;
-      padding: 22px 22px 18px;
-      color: #fff;
-      position: relative;
-      overflow: hidden;
+      border-radius: 14px; padding: 20px 20px 16px;
+      color: #fff; position: relative; overflow: hidden;
     }
     .stat-card::after {
-      content: '';
-      position: absolute;
+      content: ''; position: absolute;
       right: -20px; top: -20px;
       width: 100px; height: 100px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.12);
+      border-radius: 50%; background: rgba(255,255,255,.12);
     }
-    .stat-card .stat-icon {
-      font-size: 2.2rem;
-      opacity: .85;
-      margin-bottom: 10px;
-    }
-    .stat-card .stat-value {
-      font-family: 'Lora', serif;
-      font-size: 2rem;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .stat-card .stat-label {
-      font-size: .82rem;
-      opacity: .85;
-      margin-top: 4px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .stat-green  { background: linear-gradient(135deg, var(--green-mid), var(--green-dark)); }
-    .stat-amber  { background: linear-gradient(135deg, var(--amber), var(--amber-dark)); }
+    .stat-card .stat-icon  { font-size: 2rem; opacity: .85; margin-bottom: 8px; }
+    .stat-card .stat-value { font-family: 'Lora', serif; font-size: 1.9rem; font-weight: 700; line-height: 1; }
+    .stat-card .stat-label { font-size: .78rem; opacity: .85; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-green  { background: linear-gradient(135deg, var(--green-mid),  var(--green-dark)); }
+    .stat-amber  { background: linear-gradient(135deg, var(--amber),      var(--amber-dark)); }
     .stat-soil   { background: linear-gradient(135deg, var(--soil-light), var(--soil)); }
     .stat-profit { background: linear-gradient(135deg, #27ae60, #1a7a40); }
     .stat-loss   { background: linear-gradient(135deg, #e74c3c, #a93226); }
 
-    /* ── Buttons ──────────────────────────────────── */
+    /* Buttons */
     .btn-farm {
-      background: var(--green-mid);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 9px 20px;
-      font-weight: 600;
-      font-size: .9rem;
-      transition: all .2s;
+      background: var(--green-mid); color: #fff; border: none;
+      border-radius: 8px; padding: 9px 20px; font-weight: 600; font-size: .9rem; transition: all .2s;
     }
     .btn-farm:hover { background: var(--green-dark); color: #fff; transform: translateY(-1px); }
 
     .btn-amber {
-      background: var(--amber);
-      color: var(--text-dark);
-      border: none;
-      border-radius: 8px;
-      padding: 9px 20px;
-      font-weight: 600;
-      font-size: .9rem;
-      transition: all .2s;
+      background: var(--amber); color: var(--text-dark); border: none;
+      border-radius: 8px; padding: 9px 20px; font-weight: 600; font-size: .9rem; transition: all .2s;
     }
     .btn-amber:hover { background: var(--amber-dark); color: #fff; }
 
     .btn-outline-farm {
-      border: 2px solid var(--green-mid);
-      color: var(--green-mid);
-      border-radius: 8px;
-      padding: 8px 18px;
-      font-weight: 600;
-      font-size: .9rem;
-      background: transparent;
-      transition: all .2s;
+      border: 2px solid var(--green-mid); color: var(--green-mid);
+      border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: .9rem;
+      background: transparent; transition: all .2s;
     }
     .btn-outline-farm:hover { background: var(--green-mid); color: #fff; }
 
-    /* ── Badges ───────────────────────────────────── */
-    .badge-growing  { background: var(--green-pale);  color: var(--green-dark); }
-    .badge-harvested{ background: var(--amber-pale);  color: var(--amber-dark); }
-    .badge-status   { padding: 5px 12px; border-radius: 30px; font-weight: 600; font-size: .78rem; }
+    /* Badges */
+    .badge-growing   { background: var(--green-pale); color: var(--green-dark); }
+    .badge-harvested { background: var(--amber-pale); color: var(--amber-dark); }
+    .badge-status    { padding: 5px 12px; border-radius: 30px; font-weight: 600; font-size: .78rem; }
 
-    /* ── Table ────────────────────────────────────── */
+    /* Table */
     .farm-table th {
-      background: var(--cream-dark);
-      font-weight: 700;
-      font-size: .82rem;
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      color: var(--text-mid);
-      border: none;
+      background: var(--cream-dark); font-weight: 700;
+      font-size: .8rem; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--text-mid); border: none;
     }
     .farm-table td { vertical-align: middle; border-color: var(--cream-dark); }
     .farm-table tr:hover td { background: var(--cream); }
 
-    /* ── Forms ────────────────────────────────────── */
+    /* Forms */
     .form-control, .form-select {
-      border: 2px solid var(--cream-dark);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: .93rem;
-      transition: border-color .2s;
+      border: 2px solid var(--cream-dark); border-radius: 8px;
+      padding: 10px 14px; font-size: .93rem; transition: border-color .2s;
     }
     .form-control:focus, .form-select:focus {
-      border-color: var(--green-light);
-      box-shadow: 0 0 0 3px rgba(122,182,72,.15);
+      border-color: var(--green-light); box-shadow: 0 0 0 3px rgba(122,182,72,.15);
     }
-    .form-label {
-      font-weight: 600;
-      color: var(--text-mid);
-      font-size: .9rem;
-      margin-bottom: 5px;
-    }
+    .form-label { font-weight: 600; color: var(--text-mid); font-size: .9rem; margin-bottom: 5px; }
 
-    /* ── Alerts ───────────────────────────────────── */
+    /* Alerts */
     .alert { border: none; border-radius: 10px; font-weight: 500; }
     .alert-success { background: var(--green-pale); color: var(--green-dark); }
     .alert-info    { background: #dbeafe; color: #1e3a5f; }
     .alert-warning { background: var(--amber-pale); color: var(--amber-dark); }
     .alert-danger  { background: var(--red-pale); color: var(--red-soft); }
 
-    /* ── Progress bar ─────────────────────────────── */
+    /* Progress */
     .progress { border-radius: 30px; background: var(--cream-dark); }
     .progress-bar.bg-farm { background: var(--green-light); }
 
-    /* ── Responsive ───────────────────────────────── */
-    @media (max-width: 992px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.open {
-        transform: translateX(0);
-      }
-      .main-wrapper { margin-left: 0; }
-      .btn-hamburger { display: block; }
-      .page-content { padding: 18px; }
-    }
-
-    .sidebar-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 1039;
-    }
-    .sidebar-overlay.open { display: block; }
-
-    /* ── Misc ─────────────────────────────────────── */
+    /* Misc */
     .rupee::before { content: '₹'; }
-    .text-profit { color: #27ae60; }
-    .text-loss   { color: var(--red-soft); }
-    .section-title {
-      font-family: 'Lora', serif;
-      font-size: 1.4rem;
-      color: var(--green-dark);
-      margin-bottom: 6px;
-    }
-
-    /* Chart container */
-    .chart-box { position: relative; height: 260px; }
-
-    /* Crop image thumbnail */
-    .crop-thumb {
-      width: 44px; height: 44px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid var(--cream-dark);
-    }
+    .text-profit   { color: #27ae60; }
+    .text-loss     { color: var(--red-soft); }
+    .section-title { font-family: 'Lora', serif; font-size: 1.4rem; color: var(--green-dark); margin-bottom: 6px; }
+    .chart-box     { position: relative; height: 260px; }
+    .crop-thumb    { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 2px solid var(--cream-dark); }
     .crop-thumb-placeholder {
-      width: 44px; height: 44px;
-      background: var(--cream-dark);
-      border-radius: 8px;
+      width: 44px; height: 44px; background: var(--cream-dark); border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.3rem; color: var(--text-muted);
     }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-wrapper { margin-left: 0; }
+      .btn-hamburger { display: block; }
+      .page-content { padding: 16px; }
+      .topbar { padding: 12px 16px; }
+    }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.48); z-index: 1039;
+    }
+    .sidebar-overlay.open { display: block; }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
@@ -408,15 +357,19 @@
 <!-- Sidebar Overlay (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- ── Sidebar ─────────────────────────────────────────── -->
+<!-- ═══════════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════════════ -->
 <aside class="sidebar" id="sidebar">
-  <a href="{{ url_for('dashboard') }}" class="sidebar-brand text-decoration-none">
+
+  <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
     <span class="brand-icon">🌾</span>
     <span class="brand-name">KrishiTrack</span>
     <span class="brand-sub">Smart Farm Manager</span>
   </a>
 
   <nav class="sidebar-nav">
+
     <p class="nav-section-label">Overview</p>
     <a href="{{ url_for('dashboard') }}"
        class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
@@ -425,8 +378,13 @@
 
     <p class="nav-section-label">Farm Records</p>
     <a href="{{ url_for('crops') }}"
-       class="sidebar-link {% if 'crop' in request.endpoint %}active{% endif %}">
-      <i class="bi bi-flower1"></i> Crops
+       class="sidebar-link {% if request.endpoint in ['crops','crop_add','crop_edit','crop_detail'] %}active{% endif %}">
+      <i class="bi bi-flower1"></i> My Crops
+    </a>
+    <a href="{{ url_for('all_crop_photos') }}"
+       class="sidebar-link {% if 'photo' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-camera2"></i> Growth Photos
+      <span class="nav-pill pill-new">NEW</span>
     </a>
     <a href="{{ url_for('expenses') }}"
        class="sidebar-link {% if 'expense' in request.endpoint %}active{% endif %}">
@@ -446,46 +404,101 @@
        class="sidebar-link {% if request.endpoint == 'profit' %}active{% endif %}">
       <i class="bi bi-graph-up-arrow"></i> Profit Summary
     </a>
+    <a href="{{ url_for('profit_prediction') }}"
+       class="sidebar-link {% if request.endpoint == 'profit_prediction' %}active{% endif %}">
+      <i class="bi bi-bar-chart-line-fill"></i> Profit Predictor
+    </a>
     <a href="{{ url_for('market_price') }}"
        class="sidebar-link {% if request.endpoint == 'market_price' %}active{% endif %}">
       <i class="bi bi-shop"></i> Market Prices
-      <span style="margin-left:auto;background:#e8a020;color:#fff;font-size:.6rem;
-                   font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;">LIVE</span>
+      <span class="nav-pill pill-live">LIVE</span>
     </a>
     <a href="{{ url_for('reports') }}"
        class="sidebar-link {% if request.endpoint == 'reports' %}active{% endif %}">
       <i class="bi bi-file-earmark-bar-graph"></i> Reports
     </a>
+
+    <p class="nav-section-label">🤖 Smart AI Tools</p>
+    <a href="{{ url_for('crop_recommendation') }}"
+       class="sidebar-link {% if request.endpoint == 'crop_recommendation' %}active{% endif %}">
+      <i class="bi bi-stars"></i> Crop Advisor
+      <span class="nav-pill pill-ai">AI</span>
+    </a>
+    <a href="{{ url_for('fertilizer_recommendation') }}"
+       class="sidebar-link {% if request.endpoint == 'fertilizer_recommendation' %}active{% endif %}">
+      <i class="bi bi-droplet-fill"></i> Fertilizer Guide
+    </a>
+    <a href="{{ url_for('pesticide_recommendation') }}"
+       class="sidebar-link {% if request.endpoint == 'pesticide_recommendation' %}active{% endif %}">
+      <i class="bi bi-bug-fill"></i> Pest &amp; Disease
+    </a>
+    <a href="{{ url_for('seasonal_alerts') }}"
+       class="sidebar-link {% if request.endpoint == 'seasonal_alerts' %}active{% endif %}">
+      <i class="bi bi-calendar2-week-fill"></i> Seasonal Alerts
+    </a>
+    <a href="{{ url_for('weather_suggestions') }}"
+       class="sidebar-link {% if request.endpoint == 'weather_suggestions' %}active{% endif %}">
+      <i class="bi bi-cloud-sun-fill"></i> Weather Tips
+    </a>
+
   </nav>
 
+  <!-- User Footer -->
   <div class="sidebar-footer">
-    <div>Logged in as <strong style="color:rgba(255,255,255,.6)">{{ session.get('username','Admin') }}</strong></div>
-    <a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    <div class="sidebar-user-row">
+      <div class="sidebar-avatar">
+        {{ session.get('full_name', 'U')[0] }}
+      </div>
+      <div style="overflow:hidden;flex:1;">
+        <div class="sidebar-username">{{ session.get('full_name', 'User') }}</div>
+        <div class="sidebar-userrole">
+          @{{ session.get('username', '') }}
+          {% if session.get('user_role') == 'admin' %}
+          <span class="sidebar-admin-tag">ADMIN</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-action-btns">
+      <a href="{{ url_for('user_profile') }}">
+        <i class="bi bi-person-gear"></i> Profile
+      </a>
+      <a href="{{ url_for('logout') }}">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </div>
   </div>
+
 </aside>
 
-<!-- ── Main Wrapper ─────────────────────────────────────── -->
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN WRAPPER
+════════════════════════════════════════════════════════════ -->
 <div class="main-wrapper">
-  <!-- Topbar -->
+
   <header class="topbar">
     <div class="topbar-left">
       <button class="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu">
         <i class="bi bi-list"></i>
       </button>
-      <div>
+      <div style="min-width:0;">
         <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
         <div class="topbar-subtitle">{% block page_subtitle %}{% endblock %}</div>
       </div>
     </div>
+
     <div class="topbar-right">
-      <div class="topbar-subtitle d-none d-md-block">
+      <div class="topbar-date d-none d-md-flex">
         <i class="bi bi-calendar3"></i>
         {{ now.strftime('%d %b %Y') if now else '' }}
       </div>
-      <div class="user-badge">
-        <div class="avatar"><i class="bi bi-person-fill"></i></div>
-        Admin
-      </div>
+      <a href="{{ url_for('user_profile') }}" class="topbar-user">
+        <div class="t-avatar">{{ session.get('full_name', 'U')[0] }}</div>
+        <span class="d-none d-sm-inline">{{ session.get('full_name', 'User').split()[0] }}</span>
+        {% if session.get('user_role') == 'admin' %}
+        <span style="font-size:.62rem;background:var(--amber);color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;">ADMIN</span>
+        {% endif %}
+      </a>
     </div>
   </header>
 
@@ -501,14 +514,14 @@
     {% endwith %}
   </div>
 
-  <!-- Page Content -->
   <main class="page-content">
     {% block content %}{% endblock %}
   </main>
 
-  <footer style="text-align:center;padding:14px;font-size:.78rem;color:var(--text-muted);border-top:1px solid var(--cream-dark);">
-    KrishiTrack &copy; {{ now.year if now else '2024' }} — Built with ❤️ for farmers
+  <footer style="text-align:center;padding:14px;font-size:.76rem;color:var(--text-muted);border-top:1px solid var(--cream-dark);">
+    KrishiTrack &copy; {{ now.year if now else '2025' }} — Built with ❤️ for Indian Farmers
   </footer>
+
 </div>
 
 <!-- Bootstrap JS -->
@@ -526,7 +539,7 @@
     document.getElementById('sidebarOverlay').classList.remove('open');
   }
 
-  // Auto-dismiss alerts
+  // Auto-dismiss flash alerts after 4.5 seconds
   setTimeout(() => {
     document.querySelectorAll('.alert').forEach(el => {
       el.classList.remove('show');

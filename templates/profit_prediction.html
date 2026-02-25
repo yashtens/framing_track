@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}Profit Predictor{% endblock %}
+{% block page_title %}📊 Profit Prediction Dashboard{% endblock %}
+{% block page_subtitle %}Predict crop profitability and analyze your farm's financial performance{% endblock %}
+{% block extra_head %}
+<style>
+.predict-card{background:linear-gradient(135deg,#1a3209,#2d5016);border-radius:18px;padding:26px;color:#fff;}
+.predict-result{background:linear-gradient(135deg,#065f46,#047857);border-radius:18px;padding:26px;color:#fff;margin-top:16px;}
+.pred-metric{background:rgba(255,255,255,.12);border-radius:12px;padding:14px;text-align:center;}
+.pred-metric .val{font-family:'Lora',serif;font-size:1.6rem;font-weight:700;}
+.pred-metric .lbl{font-size:.72rem;opacity:.75;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+.actual-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:10px;border:1.5px solid var(--cream-dark);margin-bottom:8px;background:#fff;flex-wrap:wrap;gap:8px;transition:all .15s;}
+.actual-row:hover{border-color:var(--green-light);background:var(--cream);}
+.profit-positive{color:#16a34a;font-weight:700;}
+.profit-negative{color:#dc2626;font-weight:700;}
+.chart-wrap{position:relative;height:280px;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <!-- LEFT: Prediction Form -->
+  <div class="col-lg-5">
+    <div class="predict-card">
+      <h5 style="color:#d4edba;font-family:'Lora',serif;margin-bottom:4px;">🔮 Predict Future Profit</h5>
+      <p style="opacity:.7;font-size:.82rem;margin-bottom:16px;">Enter crop details to calculate expected profit</p>
+      <form method="POST">
+        <div class="mb-3">
+          <label style="color:#d4edba;font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;">🌾 Crop Name *</label>
+          <select name="pred_crop" class="form-select" required>
+            <option value="">-- Select Crop --</option>
+            {% for crop_row in rec_crops %}
+            <option value="{{ crop_row[0] }}" {% if crop_row[0] == pred_crop %}selected{% endif %}>
+              {{ crop_row[1] }} {{ crop_row[0] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label style="color:#d4edba;font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;">📐 Total Area (Acres) *</label>
+          <input type="number" name="pred_area" class="form-control" step="0.5" min="0.5" max="100"
+                 value="{{ pred_area if pred_area else '' }}" placeholder="e.g. 2.5" required>
+        </div>
+        <button type="submit" class="btn w-100"
+                style="background:#7ab648;color:#fff;font-weight:700;padding:12px;border-radius:10px;font-size:1rem;">
+          📊 Calculate Prediction
+        </button>
+      </form>
+    </div>
+
+    <!-- Prediction Result -->
+    {% if prediction %}
+    <div class="predict-result">
+      <div style="font-size:2rem;margin-bottom:4px;">{{ prediction.emoji }}</div>
+      <div style="font-family:'Lora',serif;font-size:1.2rem;font-weight:700;color:#d4edba;">
+        {{ prediction.crop }} — {{ prediction.area }} Acres
+      </div>
+      <div style="font-size:.78rem;opacity:.65;margin-bottom:16px;">
+        Duration: {{ prediction.duration }} days · Price: ₹{{ '{:,.0f}'.format(prediction.price_q) }}/q
+      </div>
+      <div class="row g-2">
+        <div class="col-6">
+          <div class="pred-metric">
+            <div class="val">{{ prediction.yield_q }} q</div>
+            <div class="lbl">Expected Yield</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="pred-metric">
+            <div class="val" style="color:#86efac;">₹{{ '{:,.0f}'.format(prediction.income) }}</div>
+            <div class="lbl">Expected Income</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="pred-metric">
+            <div class="val" style="color:#fca5a5;">₹{{ '{:,.0f}'.format(prediction.cost) }}</div>
+            <div class="lbl">Expected Cost</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="pred-metric">
+            <div class="val" style="color:{% if prediction.profit > 0 %}#86efac{% else %}#fca5a5{% endif %};">
+              {% if prediction.profit > 0 %}+{% endif %}₹{{ '{:,.0f}'.format(prediction.profit) }}
+            </div>
+            <div class="lbl">Expected Profit</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.1);border-radius:10px;text-align:center;">
+        <div style="font-size:.72rem;opacity:.7;">Return on Investment</div>
+        <div style="font-family:'Lora',serif;font-size:2rem;font-weight:700;
+                    color:{% if prediction.roi > 0 %}#86efac{% else %}#fca5a5{% endif %};">
+          {% if prediction.roi > 0 %}+{% endif %}{{ prediction.roi }}%
+        </div>
+      </div>
+      <div style="font-size:.72rem;opacity:.5;margin-top:10px;text-align:center;">
+        ⚠️ Based on average district data. Actual results depend on weather, management and market.
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Charts + Actual Data -->
+  <div class="col-lg-7">
+    <!-- Actual Farm P&L Chart -->
+    {% if chart_labels %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-bar-chart-fill text-success"></i> My Farm — Actual Profit/Loss
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap">
+          <canvas id="profitChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actual Crop Rows -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-table text-warning"></i> Crop-wise Financial Summary
+      </div>
+      <div class="card-body p-0">
+        <div class="p-3">
+          {% for c in all_crops if c.total_investment > 0 or c.total_income > 0 %}
+          <div class="actual-row">
+            <div style="flex:1.5;min-width:120px;">
+              <div style="font-weight:700;color:var(--green-dark);">{{ c.name }}</div>
+              <div style="font-size:.75rem;color:var(--text-muted);">{{ c.field_area }} acres · {{ c.status }}</div>
+            </div>
+            <div class="text-center" style="min-width:80px;">
+              <div style="font-size:.7rem;color:var(--text-muted);">Income</div>
+              <div style="font-weight:700;color:var(--green-mid);font-size:.9rem;">₹{{ '{:,.0f}'.format(c.total_income) }}</div>
+            </div>
+            <div class="text-center" style="min-width:80px;">
+              <div style="font-size:.7rem;color:var(--text-muted);">Cost</div>
+              <div style="font-weight:700;color:var(--soil);font-size:.9rem;">₹{{ '{:,.0f}'.format(c.total_investment) }}</div>
+            </div>
+            <div class="text-center" style="min-width:90px;">
+              <div style="font-size:.7rem;color:var(--text-muted);">Profit</div>
+              <div class="{% if c.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %} font-size:.95rem;">
+                {% if c.profit_loss >= 0 %}+{% endif %}₹{{ '{:,.0f}'.format(c.profit_loss) }}
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-3">No financial data yet. Add expenses and harvests to your crops.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="card text-center py-5">
+      <div style="font-size:4rem;">📊</div>
+      <h5 class="mt-3">No actual data yet</h5>
+      <p class="text-muted">Add expenses and harvest records to your crops to see actual P&L charts here.</p>
+      <a href="{{ url_for('crops') }}" class="btn btn-farm mt-2">Go to My Crops</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+{% if chart_labels %}
+const ctx = document.getElementById('profitChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [
+      {
+        label: 'Income (₹)',
+        data: {{ chart_income | tojson }},
+        backgroundColor: 'rgba(74,124,47,.7)',
+        borderColor: '#4a7c2f', borderWidth: 2, borderRadius: 6,
+      },
+      {
+        label: 'Cost (₹)',
+        data: {{ chart_cost | tojson }},
+        backgroundColor: 'rgba(107,66,38,.6)',
+        borderColor: '#6b4226', borderWidth: 2, borderRadius: 6,
+      },
+      {
+        label: 'Profit (₹)',
+        data: {{ chart_profit | tojson }},
+        backgroundColor: {{ chart_profit | tojson }}.map(v =>
+          v >= 0 ? 'rgba(22,163,74,.7)' : 'rgba(220,38,38,.7)'),
+        borderColor: {{ chart_profit | tojson }}.map(v =>
+          v >= 0 ? '#16a34a' : '#dc2626'),
+        borderWidth: 2, borderRadius: 6,
+        type: 'bar',
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      y: { ticks: { callback: v => '₹' + v.toLocaleString('en-IN') }, grid: { color: 'rgba(0,0,0,.05)' } }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

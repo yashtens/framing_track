@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Seasonal Alerts{% endblock %}
+{% block page_title %}🔔 Seasonal Crop Alerts{% endblock %}
+{% block page_subtitle %}Month-by-month crop activity reminders for your farm{% endblock %}
+{% block extra_head %}
+<style>
+.month-btn{padding:8px 14px;border-radius:30px;border:2px solid var(--cream-dark);background:#fff;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.month-btn.active{background:var(--green-mid);color:#fff;border-color:var(--green-mid);}
+.month-btn.current{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber);}
+.month-btn:hover:not(.active){border-color:var(--green-light);background:var(--green-pale);color:var(--green-dark);}
+.alert-card{border-radius:14px;border:2px solid var(--cream-dark);background:#fff;padding:18px 20px;margin-bottom:10px;transition:all .15s;border-left:5px solid var(--cream-dark);}
+.alert-card.priority-high{border-left-color:#dc2626;background:#fffafa;}
+.alert-card.priority-normal{border-left-color:var(--green-mid);}
+.alert-card.priority-low{border-left-color:var(--amber);}
+.priority-tag{padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.tag-high{background:#fee2e2;color:#991b1b;}
+.tag-normal{background:var(--green-pale);color:var(--green-dark);}
+.tag-low{background:var(--amber-pale);color:var(--amber-dark);}
+.month-progress{display:flex;gap:6px;align-items:center;margin-bottom:20px;overflow-x:auto;padding-bottom:6px;}
+</style>
+{% endblock %}
+{% block content %}
+<!-- Month Selector -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div style="font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;">
+      <i class="bi bi-calendar3"></i> Select Month to View Alerts
+      <span style="font-weight:400;margin-left:8px;">
+        (Current: <strong style="color:var(--green-dark);">{{ month_names[current_month] }}</strong>)
+      </span>
+    </div>
+    <div class="month-progress">
+      {% for m in range(1, 13) %}
+      <a href="{{ url_for('seasonal_alerts', month=m) }}"
+         class="month-btn {% if m == month_filter %}active{% endif %} {% if m == current_month and m != month_filter %}current{% endif %}">
+        {{ month_names[m][:3] }}
+        {% if m == current_month %} 🔴{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h5 style="font-family:'Lora',serif;color:var(--green-dark);margin:0;">
+    📅 {{ month_names[month_filter] }} — Crop Activity Calendar
+    {% if month_filter == current_month %}
+    <span style="font-size:.72rem;background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;vertical-align:middle;margin-left:8px;">This Month</span>
+    {% endif %}
+  </h5>
+  <span style="font-size:.8rem;color:var(--text-muted);">{{ alerts|length }} activities planned</span>
+</div>
+
+{% if alerts %}
+<!-- High Priority First -->
+{% set high_alerts = alerts|selectattr('priority','eq','High')|list %}
+{% set other_alerts = alerts|rejectattr('priority','eq','High')|list %}
+
+{% if high_alerts %}
+<div style="background:#fee2e2;border-radius:12px;padding:12px 16px;margin-bottom:16px;border:1.5px solid #fca5a5;">
+  <div style="font-weight:700;color:#991b1b;font-size:.9rem;margin-bottom:10px;">
+    🚨 {{ high_alerts|length }} HIGH PRIORITY Actions This Month
+  </div>
+  {% for a in high_alerts %}
+  <div class="alert-card priority-high">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+      <div style="flex:1;min-width:200px;">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span style="font-size:1.4rem;">{{ a.emoji }}</span>
+          <div>
+            <div style="font-weight:700;color:var(--green-dark);">{{ a.crop_name }}</div>
+            <div style="font-size:.88rem;color:#991b1b;font-weight:600;">{{ a.activity }}</div>
+          </div>
+        </div>
+        {% if a.description %}
+        <div style="font-size:.82rem;color:var(--text-mid);margin-top:6px;padding:8px 12px;background:#fff;border-radius:8px;">
+          {{ a.description }}
+        </div>
+        {% endif %}
+      </div>
+      <span class="priority-tag tag-high">🚨 High Priority</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if other_alerts %}
+<h6 style="color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-size:.75rem;margin-bottom:12px;">
+  Regular Activities
+</h6>
+{% for a in other_alerts %}
+<div class="alert-card priority-{{ a.priority|lower }}">
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div style="flex:1;min-width:200px;">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span style="font-size:1.4rem;">{{ a.emoji }}</span>
+        <div>
+          <div style="font-weight:700;color:var(--green-dark);">{{ a.crop_name }}</div>
+          <div style="font-size:.88rem;color:var(--text-mid);font-weight:600;">{{ a.activity }}</div>
+        </div>
+      </div>
+      {% if a.description %}
+      <div style="font-size:.82rem;color:var(--text-mid);margin-top:6px;">{{ a.description }}</div>
+      {% endif %}
+    </div>
+    <span class="priority-tag tag-{{ a.priority|lower }}">{{ a.priority }}</span>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% else %}
+<div class="card text-center py-5">
+  <div style="font-size:4rem;">📅</div>
+  <h5 class="mt-3">No specific alerts for {{ month_names[month_filter] }}</h5>
+  <p class="text-muted">Check adjacent months for relevant farming activities.</p>
+</div>
+{% endif %}
+
+<!-- Navigation Arrows -->
+<div class="d-flex justify-content-between mt-4">
+  {% if month_filter > 1 %}
+  <a href="{{ url_for('seasonal_alerts', month=month_filter-1) }}" class="btn btn-outline-farm">
+    ← {{ month_names[month_filter-1] }}
+  </a>
+  {% else %}<div></div>{% endif %}
+  {% if month_filter < 12 %}
+  <a href="{{ url_for('seasonal_alerts', month=month_filter+1) }}" class="btn btn-outline-farm">
+    {{ month_names[month_filter+1] }} →
+  </a>
+  {% endif %}
+</div>
+{% endblock %}

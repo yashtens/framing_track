@@ -10,175 +10,350 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
     :root {
-      --green-dark: #2d5016; --green-mid: #4a7c2f;
-      --green-light: #7ab648; --amber: #e8a020;
-      --cream: #faf7f0;
+      --green-dark:#2d5016; --green-mid:#4a7c2f;
+      --green-light:#7ab648; --amber:#e8a020; --cream:#faf7f0;
     }
+    *{box-sizing:border-box;}
     body {
-      font-family: 'Nunito', sans-serif;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #1a3209 0%, #2d5016 40%, #3d6b20 100%);
-      display: flex; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
+      font-family:'Nunito',sans-serif;
+      min-height:100vh;
+      background:linear-gradient(135deg,#1a3209 0%,#2d5016 45%,#3d6b20 100%);
+      display:flex;align-items:center;justify-content:center;
+      padding:20px;position:relative;overflow:hidden;
     }
-    /* Decorative background shapes */
-    body::before, body::after {
-      content: '';
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,.04);
+    body::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:rgba(255,255,255,.04);top:-150px;right:-100px;}
+    body::after {content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:rgba(255,255,255,.04);bottom:-100px;left:-80px;}
+
+    /* Floating crop emojis */
+    .bg-emoji {
+      position:absolute;font-size:3rem;opacity:.07;animation:float 6s ease-in-out infinite;pointer-events:none;
     }
-    body::before { width: 500px; height: 500px; top: -150px; right: -100px; }
-    body::after  { width: 350px; height: 350px; bottom: -100px; left: -80px; }
+    @keyframes float {0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-20px) rotate(10deg)}}
 
     .login-card {
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 30px 80px rgba(0,0,0,.3);
-      width: 100%; max-width: 440px;
-      padding: 0;
-      overflow: hidden;
-      position: relative;
-      z-index: 10;
-      animation: slideUp .5s ease;
+      background:#fff;border-radius:24px;
+      box-shadow:0 30px 80px rgba(0,0,0,.3);
+      width:100%;max-width:460px;overflow:hidden;
+      position:relative;z-index:10;
+      animation:slideUp .5s ease;
     }
-    @keyframes slideUp {
-      from { opacity:0; transform:translateY(30px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
     .login-header {
-      background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
-      padding: 36px 32px 28px;
-      text-align: center;
-      color: #fff;
+      background:linear-gradient(135deg,var(--green-dark),var(--green-mid));
+      padding:32px 32px 24px;text-align:center;color:#fff;
     }
-    .login-header .logo { font-size: 3rem; margin-bottom: 8px; }
-    .login-header h1 {
-      font-family: 'Lora', serif;
-      font-size: 1.7rem;
-      margin: 0;
-      color: #d4edba;
-    }
-    .login-header p { color: rgba(255,255,255,.6); font-size: .85rem; margin-top: 4px; }
+    .login-header .logo{font-size:3rem;margin-bottom:8px;}
+    .login-header h1{font-family:'Lora',serif;font-size:1.7rem;margin:0;color:#d4edba;}
+    .login-header p{color:rgba(255,255,255,.6);font-size:.85rem;margin-top:4px;}
 
-    .login-body { padding: 32px; }
+    /* Tab System */
+    .tab-bar {
+      display:flex;border-bottom:2px solid #f0f0f0;background:#fafafa;
+    }
+    .tab-btn {
+      flex:1;padding:14px;border:none;background:none;font-family:'Nunito',sans-serif;
+      font-weight:700;font-size:.9rem;color:#888;cursor:pointer;transition:all .2s;
+      border-bottom:3px solid transparent;margin-bottom:-2px;
+    }
+    .tab-btn.active{color:var(--green-dark);border-bottom-color:var(--green-mid);background:#fff;}
+    .tab-btn:hover:not(.active){color:var(--green-mid);background:#f5f5f5;}
 
-    .form-label { font-weight: 700; color: var(--green-dark); font-size: .88rem; }
-    .form-control {
-      border: 2px solid #e8f0e2;
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-size: .95rem;
-      transition: all .2s;
-    }
-    .form-control:focus {
-      border-color: var(--green-light);
-      box-shadow: 0 0 0 3px rgba(122,182,72,.15);
-    }
-    .input-group-text {
-      background: #f0f7e9;
-      border: 2px solid #e8f0e2;
-      color: var(--green-mid);
-    }
+    .tab-content{display:none;padding:28px 32px;}
+    .tab-content.active{display:block;}
 
-    .btn-login {
-      background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
-      border: none;
-      border-radius: 10px;
-      padding: 13px;
-      font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
-      width: 100%;
-      transition: all .3s;
-      letter-spacing: .5px;
+    .form-label{font-weight:700;color:var(--green-dark);font-size:.87rem;}
+    .form-control{
+      border:2px solid #e8f0e2;border-radius:10px;padding:11px 16px;
+      font-size:.93rem;transition:all .2s;
     }
-    .btn-login:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(45,80,22,.35);
-    }
+    .form-control:focus{border-color:var(--green-light);box-shadow:0 0 0 3px rgba(122,182,72,.15);outline:none;}
+    .input-group-text{background:#f0f7e9;border:2px solid #e8f0e2;color:var(--green-mid);}
 
-    .default-creds {
-      background: #f0f7e9;
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-size: .82rem;
-      color: var(--green-dark);
-      border-left: 4px solid var(--green-light);
+    .btn-primary-farm {
+      background:linear-gradient(135deg,var(--green-mid),var(--green-dark));
+      border:none;border-radius:10px;padding:13px;font-size:.98rem;
+      font-weight:700;color:#fff;width:100%;transition:all .3s;letter-spacing:.5px;
     }
-    .default-creds code { background: none; color: var(--green-dark); font-weight: 700; }
+    .btn-primary-farm:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(45,80,22,.35);}
 
-    .alert { border-radius: 10px; border: none; font-size: .9rem; }
-
-    @media (max-width: 480px) {
-      .login-card { margin: 16px; }
-      .login-body { padding: 24px; }
+    .btn-register {
+      background:linear-gradient(135deg,var(--amber),#c8860a);
+      border:none;border-radius:10px;padding:13px;font-size:.98rem;
+      font-weight:700;color:#fff;width:100%;transition:all .3s;
     }
+    .btn-register:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(200,134,10,.3);}
+
+    .divider{text-align:center;color:#aaa;font-size:.8rem;position:relative;margin:16px 0;}
+    .divider::before,.divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#e8e8e8;}
+    .divider::before{left:0;} .divider::after{right:0;}
+
+    .link-green{color:var(--green-mid);font-weight:700;text-decoration:none;}
+    .link-green:hover{color:var(--green-dark);}
+
+    .alert{border-radius:10px;border:none;font-size:.88rem;}
+    .password-strength{height:4px;border-radius:4px;margin-top:6px;transition:all .3s;background:#e8e8e8;}
+    .strength-weak{background:#dc2626;width:33%;}
+    .strength-medium{background:var(--amber);width:66%;}
+    .strength-strong{background:var(--green-mid);width:100%;}
   </style>
 </head>
 <body>
+  <!-- Background emojis -->
+  <div class="bg-emoji" style="top:10%;left:5%;animation-delay:0s;">🌾</div>
+  <div class="bg-emoji" style="top:60%;left:3%;animation-delay:1s;">🌱</div>
+  <div class="bg-emoji" style="top:20%;right:5%;animation-delay:2s;">🍅</div>
+  <div class="bg-emoji" style="bottom:15%;right:8%;animation-delay:3s;">🌽</div>
+  <div class="bg-emoji" style="bottom:5%;left:20%;animation-delay:4s;">🌿</div>
+
   <div class="login-card">
+    <!-- Header -->
     <div class="login-header">
       <div class="logo">🌾</div>
       <h1>KrishiTrack</h1>
       <p>Smart Farm Management System</p>
     </div>
 
-    <div class="login-body">
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-login-btn" onclick="showTab('login')">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+      </button>
+      <button class="tab-btn" id="tab-register-btn" onclick="showTab('register')">
+        <i class="bi bi-person-plus me-1"></i> New Account
+      </button>
+    </div>
+
+    <!-- Flash Messages -->
+    <div id="flashMessages" style="padding:0 32px;margin-top:16px;">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-          <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
+          <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
         {% endfor %}
       {% endwith %}
+    </div>
 
+    <!-- ═══ LOGIN TAB ═══ -->
+    <div class="tab-content active" id="tab-login">
       <form method="POST" action="{{ url_for('login') }}">
         <div class="mb-3">
-          <label class="form-label">Username</label>
+          <label class="form-label">Username or Email</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
             <input type="text" name="username" class="form-control"
-                   placeholder="Enter username" required autofocus value="admin">
+                   placeholder="Enter username or email" required autofocus>
           </div>
         </div>
-
-        <div class="mb-4">
-          <label class="form-label">Password</label>
+        <div class="mb-3">
+          <label class="form-label d-flex justify-content-between">
+            Password
+            <a href="{{ url_for('forgot_password') }}" class="link-green" style="font-weight:600;font-size:.82rem;">
+              <i class="bi bi-question-circle"></i> Forgot Password?
+            </a>
+          </label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
             <input type="password" name="password" class="form-control"
-                   placeholder="Enter password" required id="pwdInput">
+                   placeholder="Enter your password" required id="loginPwd">
             <button type="button" class="btn btn-outline-secondary border-2"
-                    onclick="togglePwd()" style="border-color:#e8f0e2;">
-              <i class="bi bi-eye" id="eyeIcon"></i>
+                    onclick="togglePwd('loginPwd','eyeLogin')"
+                    style="border-color:#e8f0e2;background:#f0f7e9;color:var(--green-mid);">
+              <i class="bi bi-eye" id="eyeLogin"></i>
             </button>
           </div>
         </div>
-
-        <button type="submit" class="btn-login">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check mb-0">
+            <input type="checkbox" name="remember" class="form-check-input" id="rememberMe">
+            <label class="form-check-label" for="rememberMe" style="font-size:.85rem;color:#666;">
+              Remember me for 30 days
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary-farm">
           <i class="bi bi-box-arrow-in-right me-2"></i>Login to Farm
         </button>
       </form>
+      <div class="divider mt-4">OR</div>
+      <button class="btn-register" onclick="showTab('register')">
+        <i class="bi bi-person-plus me-2"></i>Create New Account
+      </button>
+    </div>
 
-      <div class="default-creds mt-4">
-        <strong>Default credentials:</strong><br>
-        Username: <code>admin</code> &nbsp;|&nbsp; Password: <code>farm@1234</code>
-        <div class="mt-1" style="color:#7a8c6a">Change these in <code>config.py</code> before going live.</div>
+    <!-- ═══ REGISTER TAB ═══ -->
+    <div class="tab-content" id="tab-register">
+      <form method="POST" action="{{ url_for('register') }}" id="regForm">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Full Name *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+              <input type="text" name="full_name" class="form-control"
+                     placeholder="Your full name" required
+                     value="{{ full_name if full_name else '' }}">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Username *</label>
+            <div class="input-group">
+              <span class="input-group-text">@</span>
+              <input type="text" name="username" class="form-control"
+                     placeholder="username" required minlength="3"
+                     value="{{ username if username else '' }}">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Phone</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-phone"></i></span>
+              <input type="tel" name="phone" class="form-control"
+                     placeholder="10-digit mobile"
+                     value="{{ phone if phone else '' }}">
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Email Address *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+              <input type="email" name="email" class="form-control"
+                     placeholder="your@email.com" required
+                     value="{{ email if email else '' }}">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Password * (min 6 chars)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" name="password" class="form-control"
+                     placeholder="Create password" required minlength="6"
+                     id="regPwd" oninput="checkStrength(this.value)">
+              <button type="button" class="btn btn-outline-secondary border-2"
+                      onclick="togglePwd('regPwd','eyeReg')"
+                      style="border-color:#e8f0e2;background:#f0f7e9;color:var(--green-mid);">
+                <i class="bi bi-eye" id="eyeReg"></i>
+              </button>
+            </div>
+            <div class="password-strength" id="pwdStrength"></div>
+            <div id="pwdStrengthLabel" style="font-size:.72rem;color:#888;margin-top:3px;"></div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Confirm Password *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-check"></i></span>
+              <input type="password" name="confirm_password" class="form-control"
+                     placeholder="Repeat password" required id="confPwd">
+            </div>
+            <div id="pwdMatch" style="font-size:.72rem;margin-top:3px;"></div>
+          </div>
+
+          <!-- Security Question (for forgot password) -->
+          <div class="col-12">
+            <div style="background:#f0f7e9;border-radius:10px;padding:14px;border-left:4px solid var(--green-light);">
+              <div style="font-weight:700;color:var(--green-dark);font-size:.85rem;margin-bottom:10px;">
+                🔐 Security Question — for Forgot Password
+              </div>
+              <label class="form-label">Select a Question *</label>
+              <select name="security_q" class="form-select mb-2" required>
+                <option value="">-- Select Question --</option>
+                <option>What is your mother's maiden name?</option>
+                <option>What was the name of your first pet?</option>
+                <option>What is the name of the city where you were born?</option>
+                <option>What was the name of your primary school?</option>
+                <option>What is your favourite crop?</option>
+                <option>What is your father's name?</option>
+                <option>What is the name of your village/town?</option>
+              </select>
+              <label class="form-label">Your Answer *</label>
+              <input type="text" name="security_ans" class="form-control"
+                     placeholder="Your answer (remember this!)" required>
+              <div style="font-size:.72rem;color:#7a8c6a;margin-top:4px;">
+                ⚠️ Save this answer — you'll need it to reset your password
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn-register" onclick="return validateReg()">
+              <i class="bi bi-person-check me-2"></i>Create My Farm Account
+            </button>
+          </div>
+        </div>
+      </form>
+      <div class="text-center mt-3">
+        Already have an account?
+        <a href="#" class="link-green" onclick="showTab('login')">Login here →</a>
       </div>
     </div>
-  </div>
+
+  </div><!-- /login-card -->
 
   <script>
-    function togglePwd() {
-      const input = document.getElementById('pwdInput');
-      const icon  = document.getElementById('eyeIcon');
+    function showTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('tab-' + tab + '-btn').classList.add('active');
+    }
+
+    function togglePwd(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon  = document.getElementById(iconId);
       if (input.type === 'password') {
-        input.type = 'text';
-        icon.className = 'bi bi-eye-slash';
+        input.type = 'text'; icon.className = 'bi bi-eye-slash';
       } else {
-        input.type = 'password';
-        icon.className = 'bi bi-eye';
+        input.type = 'password'; icon.className = 'bi bi-eye';
       }
     }
+
+    function checkStrength(pw) {
+      const bar = document.getElementById('pwdStrength');
+      const lbl = document.getElementById('pwdStrengthLabel');
+      if (!pw) { bar.className = 'password-strength'; lbl.textContent = ''; return; }
+      const strong = pw.length >= 8 && /[A-Z]/.test(pw) && /[0-9]/.test(pw);
+      const medium = pw.length >= 6;
+      if (strong) {
+        bar.className = 'password-strength strength-strong';
+        lbl.textContent = '✅ Strong password'; lbl.style.color = '#16a34a';
+      } else if (medium) {
+        bar.className = 'password-strength strength-medium';
+        lbl.textContent = '⚠️ Medium — add uppercase & numbers'; lbl.style.color = '#ca8a04';
+      } else {
+        bar.className = 'password-strength strength-weak';
+        lbl.textContent = '❌ Too weak — min 6 characters'; lbl.style.color = '#dc2626';
+      }
+    }
+
+    document.getElementById('confPwd').addEventListener('input', function() {
+      const match = document.getElementById('pwdMatch');
+      if (this.value === document.getElementById('regPwd').value) {
+        match.textContent = '✅ Passwords match'; match.style.color = '#16a34a';
+      } else {
+        match.textContent = '❌ Passwords do not match'; match.style.color = '#dc2626';
+      }
+    });
+
+    function validateReg() {
+      const pw   = document.getElementById('regPwd').value;
+      const conf = document.getElementById('confPwd').value;
+      if (pw !== conf) { alert('Passwords do not match.'); return false; }
+      if (pw.length < 6) { alert('Password must be at least 6 characters.'); return false; }
+      return true;
+    }
+
+    // If there are flash messages and they seem like registration errors, show register tab
+    window.addEventListener('DOMContentLoaded', () => {
+      const url = window.location.pathname;
+      if (url.includes('register')) showTab('register');
+      // Auto-switch if flash msg from registration
+      const flash = document.getElementById('flashMessages');
+      if (flash && flash.textContent.includes('Username already') ||
+          flash && flash.textContent.includes('Email already') ||
+          flash && flash.textContent.includes('Passwords')) {
+        showTab('register');
+      }
+    });
   </script>
 </body>
 </html>
