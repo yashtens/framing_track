@@ -8,6 +8,8 @@ import csv
 import io
 from datetime import datetime, date, timedelta
 from functools import wraps
+import pymysql
+pymysql.install_as_MySQLdb()
 
 from flask import (Flask, render_template, redirect, url_for, request,
                    session, flash, jsonify, send_file, make_response,
